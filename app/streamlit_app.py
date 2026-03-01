@@ -664,6 +664,7 @@ def page_about():
 <div class='info-card'>End-to-end ML pipeline predicting <strong>property market price</strong>
 and <strong>investment grade</strong> using XGBoost, trained on Indian real estate data.</div>
 """, unsafe_allow_html=True)
+    st.markdown(f"Hosted App: [{HOSTED_APP_URL}]({HOSTED_APP_URL})")
 
     st.markdown("## System Architecture")
     st.markdown("""

@@ -5,6 +5,9 @@
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
 [![Streamlit](https://img.shields.io/badge/Streamlit-Supported-FF4B4B?style=flat-square&logo=streamlit&logoColor=white)](https://streamlit.io)
 [![XGBoost](https://img.shields.io/badge/XGBoost-2.0%2B-0F9D58?style=flat-square)](https://xgboost.readthedocs.io/)
+[![Live App](https://img.shields.io/badge/Live%20App-Open-1C1C1C?style=flat-square)](https://property-price-prediction-real-estate.streamlit.app/)
+
+Hosted Streamlit URL: <https://property-price-prediction-real-estate.streamlit.app/>
 
 ---
 
@@ -50,7 +53,7 @@ The full workflow covers preprocessing, feature engineering, model training, eva
 
         ┌────────────────────┐
         │ Data Loading       │
-        │ training_colab.ipynb
+        │ real_estate_raw.csv
         └─────────┬──────────┘
                   ▼
         ┌─────────────────────────────────────────────────────┐
@@ -140,9 +143,6 @@ property-price-prediction/
 │   ├── regression_scaler.joblib
 │   ├── xgb_classification_model.joblib
 │   └── classification_scaler.joblib
-│
-└── notebooks/
-    └── training_colab.ipynb
 ```
 
 ---
@@ -172,7 +172,12 @@ streamlit run app/streamlit_app.py
 
 ### 4. Re-train models (optional)
 
-Open `notebooks/training_colab.ipynb` and run all cells to reproduce preprocessing and training, then save updated model artifacts to `models/`.
+Use your training notebook/script to retrain, then export artifacts with these exact names in `models/`:
+
+- `xgb_regression_model.joblib`
+- `regression_scaler.joblib`
+- `xgb_classification_model.joblib`
+- `classification_scaler.joblib`
 
 ---
 
@@ -249,7 +254,7 @@ Open `notebooks/training_colab.ipynb` and run all cells to reproduce preprocessi
 
 ## Results
 
-Metrics below are from the executed notebook outputs (`notebooks/training_colab.ipynb`):
+Metrics below are from a previous training run of this pipeline:
 
 | Metric          | Regression       | Classification |
 | --------------- | ---------------- | -------------- |
@@ -283,15 +288,29 @@ The Streamlit application (`app/streamlit_app.py`) includes:
   - raw columns with `Furnishing_Status` and `Neighborhood`
 - Downloadable predictions CSV
 
-### 3. Dataset Insights
-
-- Cleaned dataset preview
-- Price distribution and grade distribution charts
-- Top correlation view vs `Current_Market_Price`
-
-### 4. About
+### 3. About
 
 - Summary of preprocessing, model training, and deployment flow
+
+---
+
+## Inference Pipeline (Code-Aligned)
+
+The deployed inference flow in `app/streamlit_app.py` uses these functions:
+
+1. `load_artifacts(...)`
+2. `default_values(df, feature_columns)`
+3. `build_feature_row(...)` for manual input
+4. `raw_to_feature_frame(...)` for CSV raw input
+5. `run_predict(features, reg_model, reg_scaler, clf_model, clf_scaler)`
+6. `page_manual(...)` and `page_csv(...)` UI handlers
+
+Artifact constants used by inference:
+
+- `REG_MODEL_PATH  -> models/xgb_regression_model.joblib`
+- `REG_SCALER_PATH -> models/regression_scaler.joblib`
+- `CLF_MODEL_PATH  -> models/xgb_classification_model.joblib`
+- `CLF_SCALER_PATH -> models/classification_scaler.joblib`
 
 ---
 
