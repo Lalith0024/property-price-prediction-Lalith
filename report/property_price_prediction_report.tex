@@ -1,0 +1,714 @@
+\documentclass[12pt,a4paper]{article}
+
+% ── Packages ──────────────────────────────────────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{enumitem}
+\usepackage{mdframed}
+\usepackage{float}
+\usepackage{parskip}
+
+% ── Page Layout ───────────────────────────────────────────────────────────────
+\geometry{top=2.5cm, bottom=2.5cm, left=2.5cm, right=2.5cm}
+\setlength{\headheight}{14pt}
+\sloppy
+
+% ── Colours ───────────────────────────────────────────────────────────────────
+\definecolor{primaryblue}{RGB}{30, 90, 160}
+\definecolor{lightgray}{RGB}{245, 245, 245}
+\definecolor{codegray}{RGB}{240, 240, 240}
+\definecolor{darkgray}{RGB}{80, 80, 80}
+\definecolor{accent}{RGB}{0, 120, 210}
+
+% ── Hyperref Setup ────────────────────────────────────────────────────────────
+\hypersetup{
+    colorlinks=true,
+    linkcolor=primaryblue,
+    urlcolor=accent,
+    citecolor=primaryblue,
+    pdftitle={Property Price Prediction -- Technical Report},
+    pdfauthor={ML Pipeline Team},
+}
+
+% ── Section Formatting ────────────────────────────────────────────────────────
+\titleformat{\section}{\large\bfseries\color{primaryblue}}{{\thesection}}{1em}{}[\titlerule]
+\titleformat{\subsection}{\normalsize\bfseries\color{darkgray}}{\thesubsection}{1em}{}
+\titleformat{\subsubsection}{\normalsize\itshape}{\thesubsubsection}{1em}{}
+
+% ── Code Listing Style ────────────────────────────────────────────────────────
+\lstset{
+    backgroundcolor=\color{codegray},
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    rulecolor=\color{gray},
+    keywordstyle=\color{primaryblue}\bfseries,
+    commentstyle=\color{darkgray}\itshape,
+    stringstyle=\color{accent},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    showstringspaces=false,
+    tabsize=4,
+}
+
+% ── Header / Footer ───────────────────────────────────────────────────────────
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textcolor{darkgray}{Property Price Prediction --- Technical Report}}
+\fancyhead[R]{\small\textcolor{darkgray}{Milestone 1}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\begin{document}
+
+% ── Title Page ────────────────────────────────────────────────────────────────
+\begin{titlepage}
+    \centering
+    \vspace*{1.5cm}
+
+    {\Huge\bfseries\color{primaryblue} Property Price Prediction\par}
+    \vspace{0.4cm}
+    {\Large Intelligent Real Estate Valuation \&\\[4pt] Investment Grade Classification\par}
+    \vspace{0.3cm}
+    {\normalsize via Feature Engineering and XGBoost\par}
+
+    \vspace{1.2cm}
+    \rule{0.6\linewidth}{1pt}
+    \vspace{1cm}
+
+    {\large\itshape Project 9 --- Milestone 1 Report\par}
+    \vspace{0.5cm}
+    {\normalsize GenAI Project --- Machine Learning Pipeline \& Streamlit Application\par}
+
+    \vspace{1.5cm}
+    {\normalsize\textbf{GitHub Repository:}\\[4pt]
+    \href{https://github.com/Jag2007/property-price-prediction}{\texttt{github.com/Jag2007/property-price-prediction}}\par}
+
+    \vspace{0.6cm}
+    {\normalsize\textbf{Live Application:}\\[4pt]
+    \href{https://property-price-prediction-real-estate.streamlit.app/}{\texttt{property-price-prediction-real-estate.streamlit.app}}\par}
+
+    \vspace{1.5cm}
+    {\normalsize Date: \today \par}
+    {\normalsize Version: 1.0\par}
+\end{titlepage}
+
+% ── Abstract ──────────────────────────────────────────────────────────────────
+\begin{mdframed}[backgroundcolor=lightgray, linecolor=primaryblue, linewidth=1pt, innertopmargin=10pt, innerbottommargin=10pt]
+\textbf{\large Abstract}\\[6pt]
+This report presents an end-to-end machine learning system for intelligent real estate
+valuation and investment grade classification. The pipeline operates on a dataset of
+1,800 property records, applying robust preprocessing (median imputation, ordinal and
+one-hot encoding, IQR-based outlier clipping), and trains two XGBoost models: a
+regressor for predicting \texttt{Current\_Market\_Price} and a multi-class classifier for
+predicting \texttt{Investment\_Grade} (classes 0, 1, 2). The regression model achieves an
+$R^2$ of $\mathbf{0.9483}$ with an RMSE of $\approx\!1.01\text{M}$, while the classifier
+reaches $\mathbf{97.50\%}$ accuracy and a weighted F1-score of $\mathbf{0.97}$. A
+production-ready Streamlit application supports both manual and batch (CSV) inference
+and is publicly deployed on Streamlit Community Cloud.
+\end{mdframed}
+
+\tableofcontents
+\newpage
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Introduction}
+
+\subsection{Motivation}
+
+Real estate represents one of the most significant investment categories globally. Two
+persistent challenges face buyers, sellers, and investors:
+
+\begin{enumerate}
+    \item \textbf{Manual valuation inconsistencies} --- property pricing varies non-linearly with
+          feature interactions (location, size, amenities, market dynamics), making human
+          appraisals costly and error-prone.
+    \item \textbf{Investment grade ambiguity} --- classifying a property as a good investment
+          requires simultaneously considering price, yield, and contextual signals that are
+          difficult to synthesise manually.
+\end{enumerate}
+
+\subsection{Objective}
+
+The \textit{Property Price Prediction} system is a production-structured machine learning
+pipeline that:
+
+\begin{enumerate}
+    \item Accepts raw property attributes as input.
+    \item Applies a comprehensive preprocessing and feature engineering pipeline.
+    \item Predicts a continuous \texttt{Current\_Market\_Price} via XGBoost regression.
+    \item Classifies a property into \texttt{Investment\_Grade} $\in \{0,\,1,\,2\}$ via XGBoost classification.
+    \item Exposes predictions through an interactive, publicly deployed Streamlit application.
+\end{enumerate}
+
+\subsection{Scope}
+
+\begin{itemize}[noitemsep]
+    \item \textbf{Dataset:} 1,800 residential property records with 17 raw columns.
+    \item \textbf{Tasks:} Regression (price) and multi-class classification (investment grade).
+    \item \textbf{Models:} XGBoost Regressor and XGBoost Classifier.
+    \item \textbf{Deployment:} Streamlit Community Cloud (public, live).
+\end{itemize}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Problem Statement}
+
+The core challenges addressed by this project are summarised below:
+
+\begin{table}[H]
+\centering
+\caption{Problem Scope and Challenges}
+\begin{tabular}{@{} p{5.5cm} p{8.5cm} @{}}
+\toprule
+\textbf{Challenge} & \textbf{Scope} \\
+\midrule
+Manual valuation inconsistencies & Property pricing varies by feature interactions \\
+\addlinespace
+Multi-objective prediction       & Continuous price + categorical investment grade \\
+\addlinespace
+Data quality issues              & Missing values, categorical features, outliers \\
+\addlinespace
+Deployment requirement           & Real-time predictions for unseen properties \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Dataset}
+
+\subsection{Source and Scale}
+
+The dataset \texttt{real\_estate\_raw.csv} comprises \textbf{1,800 property records} with
+\textbf{17 columns}, as confirmed by the training notebook:
+
+\begin{lstlisting}[language=Python, caption={Dataset Loading}]
+df = pd.read_csv("real_estate_raw.csv")
+print("Shape of dataset:", df.shape)
+# Output: Shape of dataset: (1800, 17)
+\end{lstlisting}
+
+Each record contains property attributes spanning structural, locational, environmental, and
+financial dimensions, together with two target variables:
+
+\begin{itemize}[noitemsep]
+    \item \texttt{Current\_Market\_Price} --- continuous regression target.
+    \item \texttt{Investment\_Grade} --- categorical classification target (0, 1, or 2).
+\end{itemize}
+
+\subsection{Feature Overview}
+
+\begin{table}[H]
+\centering
+\caption{Dataset Feature Summary}
+\begin{tabular}{@{} l l l @{}}
+\toprule
+\textbf{Feature} & \textbf{Type} & \textbf{Description} \\
+\midrule
+Total\_Square\_Footage           & Numeric (Float) & Total property area \\
+Bedrooms                         & Numeric (Int)   & Number of bedrooms \\
+Bathrooms                        & Numeric (Int)   & Number of bathrooms \\
+Age\_of\_Property                & Numeric (Int)   & Age in years \\
+Floor\_Number                    & Numeric (Int)   & Floor level \\
+Furnishing\_Status               & Categorical     & Unfurnished / Semi / Fully \\
+Neighborhood                     & Categorical     & Locality identifier \\
+Distance\_to\_City\_Center\_km   & Numeric (Float) & Distance in km \\
+Proximity\_to\_Public\_Transport\_km & Numeric (Float) & Transport proximity \\
+Crime\_Index                     & Numeric (Float) & Local crime rate \\
+Air\_Quality\_Index              & Numeric (Float) & Environmental quality \\
+Neighborhood\_Growth\_Rate\_\%  & Numeric (Float) & Growth rate \\
+Price\_per\_SqFt                 & Numeric (Float) & Unit price \\
+Annual\_Property\_Tax            & Numeric (Float) & Tax value \\
+Estimated\_Rental\_Yield\_\%    & Numeric (Float) & Rental return \\
+Current\_Market\_Price           & Numeric (Float) & \textbf{Regression target} \\
+Investment\_Grade                & Integer (0/1/2) & \textbf{Classification target} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Data Preprocessing Pipeline}
+
+A structured preprocessing pipeline was implemented to prepare the raw dataset for
+modelling. All steps are applied before any train/test split to prevent data leakage.
+
+\subsection{Missing Value Imputation}
+
+Numeric columns were imputed using \textbf{median values}, which is robust to the outliers
+present in real-estate data:
+
+\begin{lstlisting}[language=Python, caption={Median Imputation}]
+num_cols = df.select_dtypes(include=np.number).columns
+df[num_cols] = df[num_cols].fillna(df[num_cols].median())
+\end{lstlisting}
+
+\subsection{Categorical Encoding}
+
+Two encoding strategies were applied depending on feature ordinality:
+
+\subsubsection*{Ordinal Encoding --- \texttt{Furnishing\_Status}}
+
+\begin{lstlisting}[language=Python, caption={Ordinal Encoding}]
+furnish_map = {
+    'Unfurnished': 0,
+    'Semi-furnished': 1,
+    'Fully-furnished': 2
+}
+df['Furnishing_Status'] = df['Furnishing_Status'].map(furnish_map)
+\end{lstlisting}
+
+\subsubsection*{One-Hot Encoding --- \texttt{Neighborhood}}
+
+One-hot encoding with \texttt{drop\_first=True} was applied to eliminate multicollinearity
+from the dummy variable trap:
+
+\begin{lstlisting}[language=Python, caption={One-Hot Encoding}]
+df = pd.get_dummies(df, columns=['Neighborhood'], drop_first=True)
+\end{lstlisting}
+
+\subsection{Outlier Treatment}
+
+Inter-Quartile Range (IQR) clipping was applied to all numeric columns
+\textit{excluding} the two target variables (\texttt{Current\_Market\_Price} and
+\texttt{Investment\_Grade}) to preserve their natural distributions:
+
+\begin{lstlisting}[language=Python, caption={IQR-Based Outlier Clipping}]
+for col in num_cols:
+    if col not in ['Current_Market_Price', 'Investment_Grade']:
+        Q1 = df[col].quantile(0.25)
+        Q3 = df[col].quantile(0.75)
+        IQR = Q3 - Q1
+        lower = Q1 - 1.5 * IQR
+        upper = Q3 + 1.5 * IQR
+        df[col] = np.clip(df[col], lower, upper)
+\end{lstlisting}
+
+The cleaned dataset was persisted as \texttt{data/processed/real\_estate\_clean.csv} for
+reproducibility.
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{System Architecture}
+
+\subsection{High-Level Pipeline}
+
+The system is composed of two independent pipelines that share the same preprocessed
+dataset:
+
+\begin{figure}[H]
+\centering
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{p{6.5cm} p{0.8cm} p{6.5cm}}
+
+% ── TRAINING PIPELINE header ──────────────────────────────────────────
+\multicolumn{1}{c}{\textbf{\small TRAINING PIPELINE}} & &
+\multicolumn{1}{c}{\textbf{\small INFERENCE PIPELINE}} \\[4pt]
+
+% Row 1
+\fcolorbox{primaryblue}{lightgray}{\parbox{6.2cm}{\centering\small\vspace{3pt}
+\textbf{Raw Data}\\[1pt]{\footnotesize\texttt{real\_estate\_raw.csv}}\vspace{3pt}}}
+& &
+\fcolorbox{primaryblue}{lightgray}{\parbox{6.2cm}{\centering\small\vspace{3pt}
+\textbf{User Input}\\[1pt]{\footnotesize Streamlit Form / CSV Upload}\vspace{3pt}}} \\[1pt]
+
+\multicolumn{1}{c}{$\downarrow$} & & \multicolumn{1}{c}{$\downarrow$} \\[1pt]
+
+% Row 2
+\fcolorbox{primaryblue}{lightgray}{\parbox{6.2cm}{\centering\small\vspace{3pt}
+\textbf{Preprocessing}\\[1pt]{\footnotesize Imputation · Encoding · IQR Clipping}\vspace{3pt}}}
+& &
+\fcolorbox{primaryblue}{lightgray}{\parbox{6.2cm}{\centering\small\vspace{3pt}
+\textbf{Load Artifacts}\\[1pt]{\footnotesize models/ \& scalers/}\vspace{3pt}}} \\[1pt]
+
+\multicolumn{1}{c}{$\downarrow$} & & \multicolumn{1}{c}{$\downarrow$} \\[1pt]
+
+% Row 3
+\fcolorbox{primaryblue}{lightgray}{\parbox{6.2cm}{\centering\small\vspace{3pt}
+\textbf{Train / Test Split}\\[1pt]{\footnotesize 80\% Train / 20\% Test (random\_state=42)}\vspace{3pt}}}
+& &
+\fcolorbox{primaryblue}{lightgray}{\parbox{6.2cm}{\centering\small\vspace{3pt}
+\textbf{Feature Construction}\\[1pt]{\footnotesize Encoding + Numeric Validation}\vspace{3pt}}} \\[1pt]
+
+\multicolumn{1}{c}{$\downarrow$} & & \multicolumn{1}{c}{$\downarrow$} \\[1pt]
+
+% Row 4
+\fcolorbox{primaryblue}{lightgray}{\parbox{6.2cm}{\centering\small\vspace{3pt}
+\textbf{Feature Scaling}\\[1pt]{\footnotesize MinMaxScaler (fit on train only)}\vspace{3pt}}}
+& &
+\fcolorbox{primaryblue}{lightgray}{\parbox{6.2cm}{\centering\small\vspace{3pt}
+\textbf{Prediction Engine}\\[1pt]{\footnotesize scaler.transform() then reg + clf predict}\vspace{3pt}}} \\[1pt]
+
+\multicolumn{1}{c}{$\downarrow$} & & \multicolumn{1}{c}{$\downarrow$} \\[1pt]
+
+% Row 5
+\fcolorbox{primaryblue}{lightgray}{\parbox{6.2cm}{\centering\small\vspace{3pt}
+\textbf{XGBoost Training}\\[1pt]{\footnotesize XGBRegressor + XGBClassifier}\vspace{3pt}}}
+& &
+\fcolorbox{primaryblue}{lightgray}{\parbox{6.2cm}{\centering\small\vspace{3pt}
+\textbf{Outputs}\\[1pt]{\footnotesize Price · Investment Grade · Class Probabilities}\vspace{3pt}}} \\[1pt]
+
+\multicolumn{1}{c}{$\downarrow$} & & \\[1pt]
+
+% Row 6
+\fcolorbox{primaryblue}{lightgray}{\parbox{6.2cm}{\centering\small\vspace{3pt}
+\textbf{Model Persistence}\\[1pt]{\footnotesize .joblib artifacts → models/}\vspace{3pt}}}
+& \multicolumn{1}{c}{\rotatebox{0}{\footnotesize\textit{artifacts}}} & \\[1pt]
+
+\end{tabular}
+\caption{End-to-End System Architecture: Training and Inference Pipelines}
+\end{figure}
+
+\subsection{Repository Structure}
+
+\begin{lstlisting}[caption={Project Directory Layout}]
+property-price-prediction/
+├── README.md
+├── requirements.txt
+├── app/
+│   └── streamlit_app.py
+├── data/
+│   ├── raw/
+│   │   └── real_estate_raw.csv
+│   └── processed/
+│       └── real_estate_clean.csv
+└── models/
+    ├── xgb_regression_model.joblib
+    ├── regression_scaler.joblib
+    ├── xgb_classification_model.joblib
+    └── classification_scaler.joblib
+\end{lstlisting}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Model Architecture}
+
+\subsection{XGBoost Regression --- \texttt{Current\_Market\_Price}}
+
+\begin{itemize}[noitemsep]
+    \item \textbf{Target:} \texttt{Current\_Market\_Price} (continuous)
+    \item \textbf{Features:} all engineered predictors, excluding \texttt{Investment\_Grade}
+    \item \textbf{Scaling:} \texttt{MinMaxScaler} (fit on training set only)
+    \item \textbf{Split:} 80\% train / 20\% test (\texttt{random\_state=42})
+\end{itemize}
+
+\begin{table}[H]
+\centering
+\caption{XGBRegressor Hyperparameters}
+\begin{tabular}{@{} l l @{}}
+\toprule
+\textbf{Parameter} & \textbf{Value} \\
+\midrule
+\texttt{n\_estimators}  & 200  \\
+\texttt{learning\_rate} & 0.05 \\
+\texttt{max\_depth}     & 5    \\
+\texttt{random\_state}  & 42   \\
+\texttt{objective}      & \texttt{reg:squarederror} (default) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{XGBoost Classification --- \texttt{Investment\_Grade}}
+
+\begin{itemize}[noitemsep]
+    \item \textbf{Target:} \texttt{Investment\_Grade} $\in \{0, 1, 2\}$
+    \item \textbf{Features:} all engineered predictors, excluding \texttt{Investment\_Grade}
+          and \texttt{Current\_Market\_Price} (leakage prevention: price must not be used to predict grade)
+    \item \textbf{Scaling:} \texttt{MinMaxScaler} (separate scaler from regression)
+    \item \textbf{Split:} 80\% train / 20\% test (\texttt{random\_state=42})
+\end{itemize}
+
+\begin{table}[H]
+\centering
+\caption{XGBClassifier Hyperparameters}
+\begin{tabular}{@{} l l @{}}
+\toprule
+\textbf{Parameter} & \textbf{Value} \\
+\midrule
+\texttt{n\_estimators}  & 200            \\
+\texttt{learning\_rate} & 0.05           \\
+\texttt{max\_depth}     & 4              \\
+\texttt{random\_state}  & 42             \\
+\texttt{eval\_metric}   & \texttt{mlogloss} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Evaluation}
+
+\subsection{Evaluation Metrics}
+
+\subsubsection{Regression}
+
+\begin{align}
+    \text{MAE}  &= \frac{1}{n}\sum_{i=1}^{n}|y_i - \hat{y}_i| \\[6pt]
+    \text{RMSE} &= \sqrt{\frac{1}{n}\sum_{i=1}^{n}(y_i - \hat{y}_i)^2} \\[6pt]
+    R^2         &= 1 - \frac{\sum(y_i - \hat{y}_i)^2}{\sum(y_i - \bar{y})^2}
+\end{align}
+
+\subsubsection{Classification}
+
+Accuracy, weighted Precision, weighted Recall, and weighted F1-Score were computed via
+\texttt{sklearn.metrics.classification\_report}.
+
+\subsection{Results}
+
+\begin{table}[H]
+\centering
+\caption{Model Performance Summary}
+\begin{tabular}{@{} l c c @{}}
+\toprule
+\textbf{Metric} & \textbf{Regression (Price)} & \textbf{Classification (Grade)} \\
+\midrule
+$R^2$ Score         & \textbf{0.9483}       & ---             \\
+MAE                 & \textbf{550,850.82}   & ---             \\
+RMSE                & \textbf{1,010,636.01} & ---             \\
+Accuracy            & ---                   & \textbf{97.50\%} \\
+Weighted Precision  & ---                   & \textbf{0.98}   \\
+Weighted Recall     & ---                   & \textbf{0.97}   \\
+Weighted F1-Score   & ---                   & \textbf{0.97}   \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Classification Report --- Per-Class Analysis}
+
+\begin{table}[H]
+\centering
+\caption{Per-Class Performance (Investment Grade Classification)}
+\begin{tabular}{@{} l c c c c @{}}
+\toprule
+\textbf{Class} & \textbf{Precision} & \textbf{Recall} & \textbf{F1-Score} & \textbf{Support} \\
+\midrule
+0 (Grade 0) & 0.99 & 0.96 & 0.98 & 167 \\
+1 (Grade 1) & 0.96 & 0.99 & 0.98 & 171 \\
+2 (Grade 2) & 1.00 & 0.91 & 0.95 &  22 \\
+\midrule
+\textbf{Accuracy}    & \multicolumn{3}{c}{\textbf{0.975}} & \textbf{360} \\
+Macro avg            & 0.98 & 0.96 & 0.97 & 360 \\
+Weighted avg         & 0.98 & 0.97 & 0.97 & 360 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent\small\textit{Note: The total support of 360 samples = 167 + 171 + 22, corresponding to the 20\% test split of the 1,800-record dataset ($1800 \times 0.20 = 360$). Source: \texttt{classification\_report} output from the training notebook.}\normalsize
+
+\subsection{Key Observations}
+
+\begin{enumerate}
+    \item \textbf{Regression:} An $R^2$ of $0.9483$ demonstrates that XGBoost explains more than
+          $94\%$ of the variance in property prices. The relatively high RMSE ($\approx$1.01M)
+          reflects the wide price range inherent in the real-estate domain.
+    \item \textbf{Classification:} $97.5\%$ accuracy with consistently high precision and recall
+          across all three investment grade classes validates the classifier's robustness.
+    \item \textbf{Class 2 Recall:} The slightly lower recall for class 2 ($0.91$) compared to
+          classes 0 and 1 is consistent with the lower support (22 samples), indicating a
+          class imbalance concern for grade 2 properties.
+    \item \textbf{Leakage Prevention:} \texttt{Current\_Market\_Price} was explicitly excluded
+          from the classification feature set to prevent target leakage, ensuring the model
+          generalises to cold-start predictions.
+\end{enumerate}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Model Persistence and Inference}
+
+\subsection{Artifact Saving}
+
+All models and scalers are serialised using \texttt{joblib} for consistent, efficient
+loading in the inference layer:
+
+\begin{lstlisting}[language=Python, caption={Artifact Serialisation}]
+import joblib
+
+joblib.dump(reg_model,    "xgb_regression_model.joblib")
+joblib.dump(scaler_reg,   "regression_scaler.joblib")
+joblib.dump(clf_model,    "xgb_classification_model.joblib")
+joblib.dump(scaler_clf,   "classification_scaler.joblib")
+\end{lstlisting}
+
+\subsection{Inference Pipeline}
+
+The Streamlit inference layer (\texttt{app/streamlit\_app.py}) implements the following
+function sequence:
+
+\begin{enumerate}
+    \item \texttt{load\_artifacts(...)} --- loads models and scalers from \texttt{models/}
+    \item \texttt{build\_feature\_row(...)} --- constructs feature vector for manual input
+    \item \texttt{raw\_to\_feature\_frame(...)} --- transforms raw CSV rows for batch inference
+    \item \texttt{run\_predict(...)} --- scales features and calls both predict heads
+    \item \texttt{page\_manual(...)} / \texttt{page\_csv(...)} --- UI page handlers
+\end{enumerate}
+
+\subsection{Sample Inference}
+
+A representative sample prediction from the training notebook:
+
+\begin{lstlisting}[language=Python, caption={Sample Prediction}]
+sample = X_test.iloc[[78]]
+predicted_price = reg_model.predict(scaler_reg.transform(sample))[0]
+
+sample_clf = X_test_c.iloc[[0]]
+predicted_grade = clf_model.predict(scaler_clf.transform(sample_clf))[0]
+
+# Output:
+# Predicted Price: 16,749,228.0
+# Predicted Investment Grade: 1
+\end{lstlisting}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Application Interface}
+
+The Streamlit application provides three pages:
+
+\subsection{Predict (Manual Input)}
+
+Users fill in a structured form with individual property attributes. On submission, both
+\texttt{Current\_Market\_Price} and \texttt{Investment\_Grade} are predicted simultaneously,
+along with a class probability distribution bar chart.
+
+\subsection{Batch Predict (CSV Upload)}
+
+Accepts a CSV file for bulk inference. Supports:
+\begin{itemize}[noitemsep]
+    \item Fully pre-encoded feature columns, or
+    \item Raw columns with \texttt{Furnishing\_Status} and \texttt{Neighborhood} in original string form.
+\end{itemize}
+Predictions are available as a downloadable CSV.
+
+\subsection{About}
+
+A documentation page describing the preprocessing methodology, model architecture, and
+deployment workflow.
+
+\subsection{Deployment}
+
+The application is publicly hosted on \textbf{Streamlit Community Cloud}:
+
+\begin{center}
+\href{https://property-price-prediction-real-estate.streamlit.app/}{\texttt{property-price-prediction-real-estate.streamlit.app}}
+\end{center}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Limitations}
+
+\begin{enumerate}
+    \item \textbf{Dataset Size:} With 1,800 records, the model behaviour is tightly coupled to
+          the training distribution. Out-of-distribution properties (extreme sizes, unusual
+          locations) may yield less reliable predictions.
+    \item \textbf{Investment Grade Semantics:} The grade labels (0, 1, 2) are numeric class IDs.
+          Business meaning (e.g., Poor / Good / Excellent) should be mapped explicitly in a
+          production advisory system.
+    \item \textbf{Market Drift:} Real-world price dynamics change continuously. The static model
+          will degrade over time without periodic retraining on fresh data.
+    \item \textbf{Class Imbalance (Grade 2):} The low support for class 2 (22 test samples)
+          reduces confidence in recall estimates for that grade category.
+    \item \textbf{Feature Interactions:} Complex non-linear location--price interactions
+          (micro-market dynamics, zoning changes) are not captured by the current feature set.
+\end{enumerate}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Future Work}
+
+\subsection{Short-Term Improvements (Milestone 1+)}
+
+\begin{itemize}[noitemsep]
+    \item Apply SMOTE or class-weight balancing for Investment Grade class 2.
+    \item Use SHAP values for feature importance interpretability.
+    \item Expand feature engineering with location-intelligence signals (transport score,
+          nearby amenity index, pincode zone index).
+    \item Implement model monitoring for input and prediction drift.
+\end{itemize}
+
+\subsection{Milestone 2 --- Agentic AI Framework}
+
+\begin{itemize}[noitemsep]
+    \item \textbf{LangGraph Agent:} Autonomous reasoning over property characteristics to generate
+          structured investment advisory reports.
+    \item \textbf{RAG Integration:} Retrieval of real-time market trends, regulations, and
+          comparable listings via Chroma/FAISS.
+    \item \textbf{Structured Advisory Outputs:} Buy/Hold/Avoid recommendations with risk notes.
+    \item \textbf{Explainability Layer:} Feature contribution view per prediction to justify
+          price and grade estimates.
+\end{itemize}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Conclusion}
+
+This project demonstrates that gradient-boosted tree models, combined with principled
+feature engineering and preprocessing, can deliver high-quality automated real estate
+valuation and investment grade classification. The XGBoost regression model achieves
+$R^2 = 0.9483$ on held-out test data, while the XGBoost classifier reaches $97.5\%$
+accuracy with strong per-class precision and recall.
+
+The modular architecture --- separate preprocessing, model artifacts, and Streamlit
+application --- enables straightforward extension toward the Milestone 2 agentic framework.
+Key next steps include addressing class imbalance for grade 2 properties, incorporating
+richer location features, and building the LangGraph-based advisory agent.
+
+% ══════════════════════════════════════════════════════════════════════════════
+\appendix
+
+\section{Technology Stack}
+
+\begin{table}[H]
+\centering
+\caption{Technology Stack Summary}
+\begin{tabular}{@{} l l @{}}
+\toprule
+\textbf{Component} & \textbf{Technology} \\
+\midrule
+Language            & Python 3.10+                          \\
+ML Framework        & XGBoost $\geq$ 2.0, scikit-learn       \\
+Data Processing     & Pandas $\geq$ 2.0, NumPy              \\
+Web Framework       & Streamlit                             \\
+Serialisation       & Joblib                                \\
+Hosting             & Streamlit Community Cloud             \\
+Version Control     & Git / GitHub                          \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Input--Output Specification}
+
+\begin{table}[H]
+\centering
+\caption{Input Feature Vector}
+\begin{tabular}{@{} r l l @{}}
+\toprule
+\textbf{\#} & \textbf{Feature Name} & \textbf{Type} \\
+\midrule
+1  & Total\_Square\_Footage              & Float   \\
+2  & Bedrooms                            & Integer \\
+3  & Bathrooms                           & Integer \\
+4  & Age\_of\_Property                   & Integer \\
+5  & Floor\_Number                       & Integer \\
+6  & Furnishing\_Status                  & Ordinal (0/1/2) \\
+7  & Distance\_to\_City\_Center\_km      & Float   \\
+8  & Proximity\_to\_Public\_Transport\_km & Float  \\
+9  & Crime\_Index                        & Float   \\
+10 & Air\_Quality\_Index                 & Float   \\
+11 & Neighborhood\_Growth\_Rate\_\%      & Float   \\
+12 & Price\_per\_SqFt                    & Float   \\
+13 & Annual\_Property\_Tax               & Float   \\
+14 & Estimated\_Rental\_Yield\_\%        & Float   \\
+15 & Neighborhood\_* (one-hot)           & Binary  \\
+\midrule
+\multicolumn{3}{l}{\textbf{Regression Output:} \texttt{Current\_Market\_Price} (Float)} \\
+\multicolumn{3}{l}{\textbf{Classification Output:} \texttt{Investment\_Grade} $\in \{0, 1, 2\}$ + class probabilities} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\end{document}
