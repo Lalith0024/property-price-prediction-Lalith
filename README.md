@@ -180,7 +180,24 @@ streamlit run app/streamlit_app.py
 # Opens at http://localhost:8501
 ```
 
-### 4. Re-train models (optional)
+### 4. Enable the Groq prompt agent
+
+For local runs, copy the example env file and add your Groq key:
+
+```bash
+cp .env.example .env
+```
+
+Then set:
+
+```bash
+GROQ_API_KEY=your-groq-api-key
+GROQ_MODEL=llama-3.3-70b-versatile
+```
+
+For Streamlit Cloud, add the same values in app secrets. If no key is configured, the prompt agent automatically uses the local rule-based fallback so the app can still be demoed.
+
+### 5. Re-train models (optional)
 
 Use your training notebook/script to retrain, then export artifacts with these exact names in `models/`:
 
