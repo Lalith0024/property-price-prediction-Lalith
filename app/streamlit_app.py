@@ -15,6 +15,7 @@ from pages import page_about, page_agent, page_csv, page_manual
 from styles import apply_styles
 
 
+# Make imports work both in Streamlit and in Streamlit's test runner.
 st.set_page_config(
     page_title="Property Predictor",
     layout="centered",
@@ -23,6 +24,7 @@ st.set_page_config(
 apply_styles()
 
 
+# Main app shell: validate files, load context, route to the selected page.
 def main():
     required = [DATA_PATH, REG_MODEL_PATH, REG_SCALER_PATH, CLF_MODEL_PATH, CLF_SCALER_PATH]
     missing = [str(p) for p in required if not p.exists()]

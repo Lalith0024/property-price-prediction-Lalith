@@ -13,8 +13,8 @@ SOURCE_LABELS = {
 }
 
 
+# Show the common prediction output block used by prompt and manual pages.
 def render_result(result):
-    """Show the common prediction output block used by prompt and manual pages."""
     m1, m2, m3 = st.columns(3)
     m1.metric("Predicted Price", f"Rs {result['price']:,.0f}")
     m2.metric("Investment Grade", GRADE_LABELS.get(result["grade"], str(result["grade"])))
@@ -26,6 +26,7 @@ def render_result(result):
     st.dataframe(prob_df, width="stretch", hide_index=True, height=145)
 
 
+# Show compact counts after prompt extraction.
 def flow_summary(flow):
     found_count = sum(1 for value in flow["sources"].values() if value != "Training-data default")
     default_count = len(flow["sources"]) - found_count
@@ -44,8 +45,8 @@ def flow_summary(flow):
     )
 
 
+# Natural-language entry point: prompt -> Groq extraction -> user review -> ML.
 def page_agent(context):
-    """Natural-language entry point: prompt -> Groq extraction -> user review -> ML."""
     st.title("Prompt Agent")
     st.markdown(
         "<div class='info-card'>Describe a property in normal text. "
@@ -126,9 +127,10 @@ def page_agent(context):
         st.markdown("## Prediction")
         render_result(st.session_state["agent_result"])
 
+    # Keep confirmation in a popup so the main page does not become scroll-heavy.
     @st.dialog("Review categorized parameters", width="large")
+    # Keep confirmation in a popup so the main page does not become scroll-heavy.
     def review_dialog():
-        """Keep confirmation in a popup so the main page does not become scroll-heavy."""
         flow = st.session_state["agent_flow"]
         audit = compact_audit_frame(flow)
 
@@ -172,7 +174,9 @@ def page_agent(context):
                 st.session_state["agent_dialog"] = None
                 st.rerun()
 
+    # Keep edits grouped by meaning instead of showing one long form.
     @st.dialog("Change categorized values", width="large")
+    # Keep edits grouped by meaning instead of showing one long form.
     def edit_dialog():
         flow = st.session_state["agent_flow"]
         with st.form("agent_edit_form"):
@@ -258,12 +262,14 @@ def page_agent(context):
         edit_dialog()
 
 
+# Render a number input with the correct integer/decimal behavior for a field.
 def integer_or_decimal_input(col, value, key):
     if col in INT_COLUMNS:
         return st.number_input(LABELS[col], min_value=0, value=int(round(value)), step=1, format="%d", key=key)
     return st.number_input(LABELS[col], value=round(float(value), 2), step=0.01, format="%.2f", key=key)
 
 
+# Prepare review rows with friendly display labels and formatted values.
 def compact_audit_frame(flow):
     audit = pd.DataFrame(agent_audit_rows(flow))
     audit["Value"] = audit["Value"].map(format_review_value)
@@ -271,8 +277,8 @@ def compact_audit_frame(flow):
     return audit
 
 
+# Mark only the fields that were actually changed in the edit popup.
 def mark_changed_sources(flow, edited_numeric, edited_furnishing, edited_neighborhood):
-    """Mark only the fields that were actually changed in the edit popup."""
     sources = dict(flow["sources"])
     for col in RAW_NUMERIC_COLUMNS:
         if values_differ(flow["numeric_inputs"][col], edited_numeric[col]):
@@ -286,6 +292,7 @@ def mark_changed_sources(flow, edited_numeric, edited_furnishing, edited_neighbo
     return sources
 
 
+# Compare numeric values without marking tiny float formatting differences as edits.
 def values_differ(old_value, new_value):
     try:
         return abs(float(old_value) - float(new_value)) > 1e-9
@@ -293,6 +300,7 @@ def values_differ(old_value, new_value):
         return old_value != new_value
 
 
+# Format values cleanly for the review popup.
 def format_review_value(value):
     if isinstance(value, float):
         return f"{value:,.2f}".rstrip("0").rstrip(".")
@@ -301,6 +309,7 @@ def format_review_value(value):
     return str(value)
 
 
+# Clear edit-form widget state before analyzing a new prompt.
 def clear_agent_edit_keys():
     for col in RAW_NUMERIC_COLUMNS:
         st.session_state.pop(f"agent_edit_{col}", None)
@@ -308,8 +317,8 @@ def clear_agent_edit_keys():
     st.session_state.pop("agent_edit_neighborhood", None)
 
 
+# If a key is added mid-session, remove old fallback results before re-analysis.
 def clear_stale_fallback_flow(settings):
-    """If a key is added mid-session, remove old fallback results before re-analysis."""
     flow = st.session_state.get("agent_flow")
     if settings.get("api_key") and flow and flow.get("agent_source") == "Rule parser fallback":
         for key in ["agent_flow", "agent_result", "agent_dialog"]:
@@ -317,6 +326,7 @@ def clear_stale_fallback_flow(settings):
         st.info("Groq key is now loaded. Re-analyze the prompt to use Groq extraction.")
 
 
+# CSV page for batch predictions using either raw or already-encoded columns.
 def page_csv(context):
     st.title("CSV Upload")
     st.markdown(
@@ -379,6 +389,7 @@ def page_csv(context):
         )
 
 
+# Manual page for directly entering structured model fields.
 def page_manual(context):
     st.title("Manual Input")
     st.markdown(
@@ -427,6 +438,7 @@ def page_manual(context):
         render_result(st.session_state["last_result"])
 
 
+# About page summarizing the system for demo/project review.
 def page_about():
     st.title("About")
     st.markdown(

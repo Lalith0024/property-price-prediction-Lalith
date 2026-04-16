@@ -10,8 +10,8 @@ DEFAULT_API_URL = "https://api.groq.com/openai/v1/chat/completions"
 DEFAULT_MODEL = "llama-3.3-70b-versatile"
 
 
+# Load local .env values for development without adding another dependency.
 def load_local_env():
-    """Load local .env values for development without adding another dependency."""
     env_path = BASE_DIR / ".env"
     if not env_path.exists():
         return
@@ -27,6 +27,7 @@ def load_local_env():
             os.environ[key] = value
 
 
+# Read one config value from .env, environment variables, or Streamlit secrets.
 def config_value(secrets, key):
     load_local_env()
     value = os.getenv(key)
@@ -40,6 +41,7 @@ def config_value(secrets, key):
     return value if is_real_config_value(value) else None
 
 
+# Treat blank placeholder values as missing so demos do not call Groq accidentally.
 def is_real_config_value(value):
     if not value:
         return False
@@ -47,8 +49,8 @@ def is_real_config_value(value):
     return not value.lower().startswith("replace-with")
 
 
+# Return the Groq settings used by the prompt extraction step.
 def api_settings_from(secrets):
-    """Return the Groq settings from .env, environment variables, or Streamlit secrets."""
     api_key = config_value(secrets, "GROQ_API_KEY")
     return {
         "api_key": api_key,
@@ -57,11 +59,13 @@ def api_settings_from(secrets):
     }
 
 
+# Normalize prompt text before the offline fallback parser checks patterns.
 def clean_prompt_text(text):
     text = re.sub(r"(?<=\d),(?=\d)", "", text.lower())
     return re.sub(r"\s+", " ", text).strip()
 
 
+# Try a list of regex patterns and return the first numeric match.
 def extract_number(text, patterns):
     for pattern in patterns:
         match = re.search(pattern, text, flags=re.IGNORECASE)
@@ -70,8 +74,8 @@ def extract_number(text, patterns):
     return None
 
 
+# Small offline fallback used only when GROQ_API_KEY is not configured.
 def parse_prompt_with_rules(prompt):
-    """Small offline fallback used only when GROQ_API_KEY is not configured."""
     text = clean_prompt_text(prompt)
     number = r"(\d+(?:\.\d+)?)"
 
@@ -154,8 +158,8 @@ def parse_prompt_with_rules(prompt):
     return parsed, furnishing, neighborhood
 
 
+# Ask Groq to convert the user's text prompt into model-ready JSON fields.
 def parse_prompt_with_api(prompt, settings):
-    """Ask Groq to convert the user's text prompt into model-ready JSON fields."""
     if not settings.get("api_key"):
         raise ValueError("API key is missing")
 
@@ -212,8 +216,8 @@ def parse_prompt_with_api(prompt, settings):
     return numeric, furnishing, neighborhood
 
 
+# Use Groq when a key exists; otherwise use the local fallback parser.
 def parse_prompt(prompt, settings):
-    """Use Groq when a key exists; otherwise use the local fallback parser."""
     if settings.get("api_key"):
         numeric, furnishing, neighborhood = parse_prompt_with_api(prompt, settings)
         return numeric, furnishing, neighborhood, "Groq extracted", None
@@ -222,8 +226,8 @@ def parse_prompt(prompt, settings):
     return numeric, furnishing, neighborhood, "Rule parser fallback", "GROQ_API_KEY is not configured."
 
 
+# Merge extracted prompt values with defaults for fields the user did not mention.
 def assemble_agent_fields(prompt, defaults, default_furnishing, default_neighborhood, settings):
-    """Merge extracted prompt values with defaults for fields the user did not mention."""
     parsed_numeric, parsed_furnishing, parsed_neighborhood, source_label, warning = parse_prompt(prompt, settings)
     numeric_inputs = {}
     sources = {}
@@ -253,6 +257,7 @@ def assemble_agent_fields(prompt, defaults, default_furnishing, default_neighbor
     }
 
 
+# Build the review-table rows shown to the user before prediction.
 def agent_audit_rows(flow):
     rows = []
     for col in RAW_NUMERIC_COLUMNS:

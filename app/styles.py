@@ -1,6 +1,7 @@
 import streamlit as st
 
 
+# Apply one shared CSS block so all pages keep the same visual language.
 def apply_styles():
     st.markdown(
         """
