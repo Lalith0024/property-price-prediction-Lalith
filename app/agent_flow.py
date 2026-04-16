@@ -9,14 +9,9 @@ from config import BASE_DIR, FURNISH_MAP, INT_COLUMNS, LABELS, NEIGHBORHOODS, RA
 DEFAULT_API_URL = "https://api.groq.com/openai/v1/chat/completions"
 DEFAULT_MODEL = "llama-3.3-70b-versatile"
 
-FIELD_SCHEMA = {
-    "numeric_inputs": RAW_NUMERIC_COLUMNS,
-    "furnishing_status": list(FURNISH_MAP.keys()),
-    "neighborhood": NEIGHBORHOODS,
-}
-
 
 def load_local_env():
+    """Load local .env values for development without adding another dependency."""
     env_path = BASE_DIR / ".env"
     if not env_path.exists():
         return
@@ -53,6 +48,7 @@ def is_real_config_value(value):
 
 
 def api_settings_from(secrets):
+    """Return the Groq settings from .env, environment variables, or Streamlit secrets."""
     api_key = config_value(secrets, "GROQ_API_KEY")
     return {
         "api_key": api_key,
@@ -75,6 +71,7 @@ def extract_number(text, patterns):
 
 
 def parse_prompt_with_rules(prompt):
+    """Small offline fallback used only when GROQ_API_KEY is not configured."""
     text = clean_prompt_text(prompt)
     number = r"(\d+(?:\.\d+)?)"
 
@@ -158,6 +155,7 @@ def parse_prompt_with_rules(prompt):
 
 
 def parse_prompt_with_api(prompt, settings):
+    """Ask Groq to convert the user's text prompt into model-ready JSON fields."""
     if not settings.get("api_key"):
         raise ValueError("API key is missing")
 
@@ -184,7 +182,9 @@ def parse_prompt_with_api(prompt, settings):
         data=json.dumps(payload).encode("utf-8"),
         headers={
             "Authorization": f"Bearer {settings['api_key']}",
+            "Accept": "application/json",
             "Content-Type": "application/json",
+            "User-Agent": "property-price-prediction-streamlit/1.0",
         },
         method="POST",
     )
@@ -213,19 +213,17 @@ def parse_prompt_with_api(prompt, settings):
 
 
 def parse_prompt(prompt, settings):
+    """Use Groq when a key exists; otherwise use the local fallback parser."""
     if settings.get("api_key"):
-        try:
-            numeric, furnishing, neighborhood = parse_prompt_with_api(prompt, settings)
-            return numeric, furnishing, neighborhood, "Groq extracted", None
-        except Exception as exc:
-            numeric, furnishing, neighborhood = parse_prompt_with_rules(prompt)
-            return numeric, furnishing, neighborhood, "Rule parser fallback", str(exc)
+        numeric, furnishing, neighborhood = parse_prompt_with_api(prompt, settings)
+        return numeric, furnishing, neighborhood, "Groq extracted", None
 
     numeric, furnishing, neighborhood = parse_prompt_with_rules(prompt)
     return numeric, furnishing, neighborhood, "Rule parser fallback", "GROQ_API_KEY is not configured."
 
 
 def assemble_agent_fields(prompt, defaults, default_furnishing, default_neighborhood, settings):
+    """Merge extracted prompt values with defaults for fields the user did not mention."""
     parsed_numeric, parsed_furnishing, parsed_neighborhood, source_label, warning = parse_prompt(prompt, settings)
     numeric_inputs = {}
     sources = {}

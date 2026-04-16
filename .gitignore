@@ -1,7 +1,46 @@
-.DS_Store
+# Local secrets and environment
 .env
+.env.*
+!.env.example
 .streamlit/secrets.toml
+
+# Python caches and virtual environments
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+.Python
 venv/
 .venv/
+env/
+ENV/
+
+# Test, lint, and coverage output
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Streamlit/runtime caches
+.streamlit/cache/
+.streamlit/credentials.toml
+
+# Notebook checkpoints
+.ipynb_checkpoints/
+**/.ipynb_checkpoints/
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Local logs and ad-hoc outputs
+*.log
+logs/
+tmp/
+temp/
+outputs/
+property_predictions.csv

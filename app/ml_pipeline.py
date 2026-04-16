@@ -28,6 +28,7 @@ def load_artifacts(
     clf_model_mtime: int,
     clf_scaler_mtime: int,
 ):
+    """Load model artifacts once and verify both models expect the same feature order."""
     reg_model = joblib.load(REG_MODEL_PATH)
     reg_scaler = joblib.load(REG_SCALER_PATH)
     clf_model = joblib.load(CLF_MODEL_PATH)
@@ -52,6 +53,7 @@ def load_artifacts(
 
 
 def load_runtime_context():
+    """Bundle all data, model artifacts, and defaults needed by the Streamlit pages."""
     df = load_clean_data()
     reg_model, reg_scaler, clf_model, clf_scaler, feature_columns = load_artifacts(
         int(REG_MODEL_PATH.stat().st_mtime_ns),
@@ -73,6 +75,7 @@ def load_runtime_context():
 
 
 def default_values(df, feature_columns):
+    """Median defaults fill fields that the prompt or CSV did not provide."""
     return {
         col: float(pd.to_numeric(df[col], errors="coerce").median()) if col in df.columns else 0.0
         for col in feature_columns
@@ -80,6 +83,7 @@ def default_values(df, feature_columns):
 
 
 def default_categories(df):
+    """Most-common categorical defaults keep prompt inference possible with partial input."""
     reverse_furnish = {v: k for k, v in FURNISH_MAP.items()}
     furnishing = "Semi-furnished"
     if "Furnishing_Status" in df.columns:
@@ -101,6 +105,7 @@ def default_categories(df):
 
 
 def build_feature_row(numeric_inputs, furnishing, neighborhood, feature_columns):
+    """Convert user-facing raw inputs into the encoded feature row used during training."""
     row = {c: 0.0 for c in feature_columns}
     for c, v in numeric_inputs.items():
         if c in row:
@@ -115,6 +120,7 @@ def build_feature_row(numeric_inputs, furnishing, neighborhood, feature_columns)
 
 
 def raw_to_feature_frame(raw_df, feature_columns, defaults):
+    """Normalize uploaded raw CSV rows into the saved model's feature schema."""
     out = pd.DataFrame(0.0, index=raw_df.index, columns=feature_columns)
     for col in RAW_NUMERIC_COLUMNS:
         if col in out.columns:
@@ -129,6 +135,7 @@ def raw_to_feature_frame(raw_df, feature_columns, defaults):
 
 
 def run_predict(features, reg_model, reg_scaler, clf_model, clf_scaler):
+    """Run the regression and classification models on already-built features."""
     price = reg_model.predict(reg_scaler.transform(features))
     price = price.clip(min=0)
     grade = clf_model.predict(clf_scaler.transform(features))
@@ -137,6 +144,7 @@ def run_predict(features, reg_model, reg_scaler, clf_model, clf_scaler):
 
 
 def predict_single(numeric_inputs, furnishing, neighborhood, context):
+    """Convenience wrapper for one confirmed property from prompt/manual input."""
     row = build_feature_row(numeric_inputs, furnishing, neighborhood, context["feature_columns"])
     prices, grades, probs = run_predict(
         row,

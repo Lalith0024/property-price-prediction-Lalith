@@ -6,14 +6,15 @@ from config import FURNISH_MAP, GRADE_LABELS, INT_COLUMNS, LABELS, NEIGHBORHOODS
 from ml_pipeline import build_feature_row, predict_single, raw_to_feature_frame, run_predict
 
 SOURCE_LABELS = {
-    "Groq extracted": "Groq",
-    "Rule parser fallback": "Rules",
+    "Groq extracted": "Prompt",
+    "Rule parser fallback": "Prompt",
     "Training-data default": "Default",
     "Edited by user": "Edited",
 }
 
 
 def render_result(result):
+    """Show the common prediction output block used by prompt and manual pages."""
     m1, m2, m3 = st.columns(3)
     m1.metric("Predicted Price", f"Rs {result['price']:,.0f}")
     m2.metric("Investment Grade", GRADE_LABELS.get(result["grade"], str(result["grade"])))
@@ -22,7 +23,7 @@ def render_result(result):
     prob_df = pd.DataFrame(
         [{"Investment Grade": grade, "Probability": f"{prob:.1%}"} for grade, prob in result["probabilities"].items()]
     )
-    st.dataframe(prob_df, use_container_width=True, hide_index=True, height=145)
+    st.dataframe(prob_df, width="stretch", hide_index=True, height=145)
 
 
 def flow_summary(flow):
@@ -44,6 +45,7 @@ def flow_summary(flow):
 
 
 def page_agent(context):
+    """Natural-language entry point: prompt -> Groq extraction -> user review -> ML."""
     st.title("Prompt Agent")
     st.markdown(
         "<div class='info-card'>Describe a property in normal text. "
@@ -58,6 +60,7 @@ def page_agent(context):
         st.caption(f"Groq API mode: {settings['model']}")
     else:
         st.caption("Using local fallback extractor. Add GROQ_API_KEY in .env or Streamlit secrets for Groq mode.")
+    clear_stale_fallback_flow(settings)
 
     prompt = st.text_area(
         "Property prompt",
@@ -68,9 +71,9 @@ def page_agent(context):
 
     c1, c2 = st.columns([2, 1], gap="medium")
     with c1:
-        analyze = st.button("Analyze Prompt", use_container_width=True)
+        analyze = st.button("Analyze Prompt", width="stretch")
     with c2:
-        reset = st.button("Start Over", use_container_width=True)
+        reset = st.button("Start Over", width="stretch")
 
     if reset:
         for key in ["agent_flow", "agent_result", "agent_dialog"]:
@@ -82,13 +85,20 @@ def page_agent(context):
             st.warning("Enter a property description first.")
             return
         clear_agent_edit_keys()
-        st.session_state["agent_flow"] = assemble_agent_fields(
-            prompt,
-            context["defaults"],
-            default_furnishing,
-            default_neighborhood,
-            settings,
-        )
+        try:
+            st.session_state["agent_flow"] = assemble_agent_fields(
+                prompt,
+                context["defaults"],
+                default_furnishing,
+                default_neighborhood,
+                settings,
+            )
+        except Exception as exc:
+            st.session_state.pop("agent_flow", None)
+            st.session_state.pop("agent_result", None)
+            st.session_state.pop("agent_dialog", None)
+            st.error(f"Groq extraction failed: {exc}")
+            return
         st.session_state["agent_dialog"] = "review"
         st.session_state.pop("agent_result", None)
 
@@ -105,10 +115,10 @@ def page_agent(context):
 
     b1, b2 = st.columns(2, gap="medium")
     with b1:
-        if st.button("Review Parameters", use_container_width=True):
+        if st.button("Review Parameters", width="stretch"):
             st.session_state["agent_dialog"] = "review"
     with b2:
-        if st.button("Change Values", use_container_width=True):
+        if st.button("Change Values", width="stretch"):
             st.session_state["agent_dialog"] = "edit"
 
     if "agent_result" in st.session_state:
@@ -118,6 +128,7 @@ def page_agent(context):
 
     @st.dialog("Review categorized parameters", width="large")
     def review_dialog():
+        """Keep confirmation in a popup so the main page does not become scroll-heavy."""
         flow = st.session_state["agent_flow"]
         audit = compact_audit_frame(flow)
 
@@ -126,7 +137,7 @@ def page_agent(context):
 
         st.dataframe(
             audit,
-            use_container_width=True,
+            width="stretch",
             height=420,
             hide_index=True,
             column_config={
@@ -143,7 +154,7 @@ def page_agent(context):
 
         d1, d2, d3 = st.columns(3, gap="medium")
         with d1:
-            if st.button("Proceed", use_container_width=True):
+            if st.button("Proceed", width="stretch"):
                 st.session_state["agent_result"] = predict_single(
                     flow["numeric_inputs"],
                     flow["furnishing"],
@@ -153,11 +164,11 @@ def page_agent(context):
                 st.session_state["agent_dialog"] = None
                 st.rerun()
         with d2:
-            if st.button("Change", use_container_width=True):
+            if st.button("Change", width="stretch"):
                 st.session_state["agent_dialog"] = "edit"
                 st.rerun()
         with d3:
-            if st.button("Close", use_container_width=True):
+            if st.button("Close", width="stretch"):
                 st.session_state["agent_dialog"] = None
                 st.rerun()
 
@@ -214,20 +225,22 @@ def page_agent(context):
                     with cols[idx % 2]:
                         edited_numeric[col] = integer_or_decimal_input(col, flow["numeric_inputs"][col], f"agent_edit_{col}")
 
-            submitted = st.form_submit_button("Save & Predict", use_container_width=True)
+            submitted = st.form_submit_button("Save & Predict", width="stretch")
 
         if submitted:
+            updated_sources = mark_changed_sources(
+                flow,
+                edited_numeric,
+                edited_furnishing,
+                edited_neighborhood,
+            )
             st.session_state["agent_flow"] = {
                 "prompt": flow["prompt"],
                 "numeric_inputs": edited_numeric,
                 "furnishing": edited_furnishing,
                 "neighborhood": edited_neighborhood,
-                "sources": {
-                    **{col: "Edited by user" for col in RAW_NUMERIC_COLUMNS},
-                    "Furnishing_Status": "Edited by user",
-                    "Neighborhood": "Edited by user",
-                },
-                "agent_source": "Edited by user",
+                "sources": updated_sources,
+                "agent_source": flow.get("agent_source", "Groq extracted"),
                 "agent_warning": None,
             }
             st.session_state["agent_result"] = predict_single(
@@ -258,6 +271,28 @@ def compact_audit_frame(flow):
     return audit
 
 
+def mark_changed_sources(flow, edited_numeric, edited_furnishing, edited_neighborhood):
+    """Mark only the fields that were actually changed in the edit popup."""
+    sources = dict(flow["sources"])
+    for col in RAW_NUMERIC_COLUMNS:
+        if values_differ(flow["numeric_inputs"][col], edited_numeric[col]):
+            sources[col] = "Edited by user"
+
+    if flow["furnishing"] != edited_furnishing:
+        sources["Furnishing_Status"] = "Edited by user"
+    if flow["neighborhood"] != edited_neighborhood:
+        sources["Neighborhood"] = "Edited by user"
+
+    return sources
+
+
+def values_differ(old_value, new_value):
+    try:
+        return abs(float(old_value) - float(new_value)) > 1e-9
+    except (TypeError, ValueError):
+        return old_value != new_value
+
+
 def format_review_value(value):
     if isinstance(value, float):
         return f"{value:,.2f}".rstrip("0").rstrip(".")
@@ -271,6 +306,15 @@ def clear_agent_edit_keys():
         st.session_state.pop(f"agent_edit_{col}", None)
     st.session_state.pop("agent_edit_furnishing", None)
     st.session_state.pop("agent_edit_neighborhood", None)
+
+
+def clear_stale_fallback_flow(settings):
+    """If a key is added mid-session, remove old fallback results before re-analysis."""
+    flow = st.session_state.get("agent_flow")
+    if settings.get("api_key") and flow and flow.get("agent_source") == "Rule parser fallback":
+        for key in ["agent_flow", "agent_result", "agent_dialog"]:
+            st.session_state.pop(key, None)
+        st.info("Groq key is now loaded. Re-analyze the prompt to use Groq extraction.")
 
 
 def page_csv(context):
@@ -289,7 +333,7 @@ def page_csv(context):
 
     input_df = pd.read_csv(file)
     st.markdown(f"<span class='section-label'>{len(input_df)} rows preview</span>", unsafe_allow_html=True)
-    st.dataframe(input_df.head(10), use_container_width=True, height=210)
+    st.dataframe(input_df.head(10), width="stretch", height=210)
 
     feature_columns = context["feature_columns"]
     has_encoded = all(c in input_df.columns for c in feature_columns)
@@ -303,7 +347,7 @@ def page_csv(context):
         st.error("Column mismatch. Provide encoded feature columns or raw columns with Furnishing_Status and Neighborhood.")
         return
 
-    if st.button("Run Predictions", use_container_width=True):
+    if st.button("Run Predictions", width="stretch"):
         features = (
             input_df[feature_columns].copy()
             if has_encoded
@@ -325,13 +369,13 @@ def page_csv(context):
 
         st.markdown("---")
         st.markdown(f"<span class='section-label'>Results - {len(out)} rows</span>", unsafe_allow_html=True)
-        st.dataframe(out, use_container_width=True, height=300)
+        st.dataframe(out, width="stretch", height=300)
         st.download_button(
             "Download predictions as CSV",
             out.to_csv(index=False).encode("utf-8"),
             file_name="property_predictions.csv",
             mime="text/csv",
-            use_container_width=True,
+            width="stretch",
         )
 
 
@@ -362,7 +406,7 @@ def page_manual(context):
 
     st.markdown("---")
 
-    if st.button("Predict", use_container_width=True):
+    if st.button("Predict", width="stretch"):
         row = build_feature_row(numeric_inputs, furnishing, neighborhood, context["feature_columns"])
         prices, grades, probs = run_predict(
             row,
