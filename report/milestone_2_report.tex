@@ -1,377 +1,410 @@
 \documentclass[12pt,a4paper]{article}
 
-% ---------- packages ----------
-\usepackage[a4paper, margin=2.5cm]{geometry}
-\usepackage{times}
+% ─── PACKAGES ────────────────────────────────────────────────────────────────
+\usepackage[top=2.5cm,bottom=2.5cm,left=2.5cm,right=2.5cm]{geometry}
 \usepackage{graphicx}
 \usepackage{booktabs}
-\usepackage{tabularx}
 \usepackage{longtable}
 \usepackage{array}
-\usepackage{xcolor}
+\usepackage{amsmath}
+\usepackage{amssymb}
 \usepackage{hyperref}
-\usepackage{listings}
+\usepackage{xcolor}
 \usepackage{fancyhdr}
 \usepackage{titlesec}
 \usepackage{enumitem}
-\usepackage{amsmath}
-\usepackage{microtype}
+\usepackage{listings}
+\usepackage{courier}
 \usepackage{caption}
-\usepackage{parskip}
-\usepackage{mdframed}
-\usepackage{multirow}
 \usepackage{float}
+\usepackage{parskip}
+\usepackage{tcolorbox}
+\usepackage{microtype}
+\usepackage{multirow}
+\usepackage{tabularx}
+\usepackage{makecell}
+\usepackage{setspace}
 
-% ---------- colours ----------
-\definecolor{primary}{RGB}{28,28,28}
-\definecolor{accent}{RGB}{15,90,173}
-\definecolor{lightgray}{RGB}{247,246,243}
-\definecolor{mygray}{RGB}{100,100,100}
-\definecolor{codegreen}{RGB}{0,128,0}
-\definecolor{codegray}{RGB}{128,128,128}
-\definecolor{codered}{RGB}{180,0,0}
+% ─── COLORS ──────────────────────────────────────────────────────────────────
+\definecolor{primaryblue}{RGB}{20,60,110}
+\definecolor{accentblue}{RGB}{41,128,185}
+\definecolor{lightgray}{RGB}{247,247,247}
+\definecolor{midgray}{RGB}{200,200,200}
+\definecolor{darkgray}{RGB}{70,70,70}
+\definecolor{codegreen}{RGB}{39,174,96}
+\definecolor{codegray}{RGB}{130,130,130}
+\definecolor{nodecolor}{RGB}{142,68,173}
+\definecolor{successgreen}{RGB}{39,174,96}
 
-% ---------- hyperref ----------
+% ─── HYPERREF ────────────────────────────────────────────────────────────────
 \hypersetup{
-  colorlinks=true,
-  linkcolor=accent,
-  urlcolor=accent,
-  citecolor=accent,
-  pdftitle={Intelligent Property Price Prediction and Agentic Real Estate Advisory},
-  pdfauthor={Project 9}
+    colorlinks=true,
+    linkcolor=primaryblue,
+    urlcolor=accentblue,
+    citecolor=primaryblue,
+    pdftitle={Intelligent Property Price Prediction and Agentic Real Estate Advisory - Milestone 2},
+    pdfauthor={Project 9}
 }
 
-% ---------- section styling ----------
-\titleformat{\section}{\large\bfseries\color{primary}}{}{0em}{}[\vspace{-0.3em}\rule{\linewidth}{0.8pt}\vspace{0.2em}]
-\titleformat{\subsection}{\normalsize\bfseries\color{primary}}{}{0em}{}
-\titleformat{\subsubsection}{\normalsize\itshape\color{mygray}}{}{0em}{}
-
-% ---------- listings ----------
-\lstset{
-  basicstyle=\ttfamily\footnotesize,
-  keywordstyle=\color{accent}\bfseries,
-  commentstyle=\color{codegreen},
-  stringstyle=\color{codered},
-  breaklines=true,
-  frame=single,
-  framerule=0.4pt,
-  rulecolor=\color{lightgray},
-  backgroundcolor=\color{lightgray},
-  numbers=left,
-  numberstyle=\tiny\color{codegray},
-  xleftmargin=1.5em,
-  framexleftmargin=1.5em,
-  captionpos=b
-}
-
-% ---------- header / footer ----------
+% ─── PAGE STYLE ──────────────────────────────────────────────────────────────
 \pagestyle{fancy}
 \fancyhf{}
-\fancyhead[L]{\small\color{mygray}Intelligent Property Price Prediction \& Agentic Real Estate Advisory}
-\fancyhead[R]{\small\color{mygray}Project 9}
+\fancyhead[L]{\small\color{darkgray}\textit{Intelligent Property Price Prediction \& Agentic Real Estate Advisory}}
+\fancyhead[R]{\small\color{darkgray}Project 9}
 \fancyfoot[C]{\small\thepage}
-\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\headrulewidth}{0.5pt}
 
-% ---------- framed box for callouts ----------
-\newmdenv[linecolor=accent!40,backgroundcolor=accent!5,linewidth=1pt,
-  innerleftmargin=10pt,innerrightmargin=10pt,innertopmargin=8pt,innerbottommargin=8pt]{infobox}
+% ─── SECTION FORMATTING ──────────────────────────────────────────────────────
+\titleformat{\section}{\large\bfseries\color{primaryblue}}{\thesection}{0.8em}{}[\vspace{-0.3em}\color{midgray}\rule{\linewidth}{0.5pt}]
+\titleformat{\subsection}{\normalsize\bfseries\color{primaryblue}}{\thesubsection}{0.6em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries\color{darkgray}}{\thesubsubsection}{0.6em}{}
 
-\newmdenv[linecolor=codegreen!60,backgroundcolor=codegreen!5,linewidth=1pt,
-  innerleftmargin=10pt,innerrightmargin=10pt,innertopmargin=8pt,innerbottommargin=8pt]{resultbox}
+% ─── CODE LISTING ────────────────────────────────────────────────────────────
+\lstset{
+    basicstyle=\ttfamily\footnotesize,
+    backgroundcolor=\color{lightgray},
+    keywordstyle=\color{primaryblue}\bfseries,
+    commentstyle=\color{codegray}\itshape,
+    stringstyle=\color{codegreen},
+    breaklines=true,
+    frame=single,
+    framerule=0.4pt,
+    rulecolor=\color{midgray},
+    captionpos=b,
+    tabsize=4,
+    showstringspaces=false,
+    numbers=left,
+    numberstyle=\tiny\color{codegray},
+    numbersep=6pt,
+}
 
-% ---------- document ----------
+% ─── TCOLORBOX STYLES ────────────────────────────────────────────────────────
+\tcbuselibrary{skins,breakable}
+
+\newtcolorbox{infobox}[1][]{
+    colback=lightgray,
+    colframe=primaryblue,
+    fonttitle=\bfseries\small,
+    boxrule=0.8pt,
+    arc=3pt,
+    left=6pt, right=6pt, top=4pt, bottom=4pt,
+    #1
+}
+
+\newtcolorbox{guardrailbox}[1][]{
+    colback=lightgray,
+    colframe=nodecolor,
+    fonttitle=\bfseries\small\color{nodecolor},
+    boxrule=0.6pt,
+    arc=2pt,
+    left=6pt, right=6pt, top=3pt, bottom=3pt,
+    #1
+}
+
+% ─── DOCUMENT ────────────────────────────────────────────────────────────────
 \begin{document}
 
-% =====================================================================
+% ════════════════════════════════════════════════════════
 %  TITLE PAGE
-% =====================================================================
+% ════════════════════════════════════════════════════════
 \begin{titlepage}
-  \centering
-  \vspace*{1.5cm}
+\centering
+\vspace*{1.2cm}
 
-  {\fontsize{11}{13}\selectfont\color{mygray}\textsc{End-Semester Project Report --- Milestone 2}}\\[0.6cm]
+{\large\bfseries\color{darkgray} END-SEMESTER PROJECT REPORT \textemdash{} MILESTONE 2\par}
+\vspace{0.5cm}
+{\color{midgray}\rule{\linewidth}{1.5pt}\par}
+\vspace{0.9cm}
 
-  \rule{\linewidth}{1.5pt}\\[0.3cm]
-  {\fontsize{22}{26}\bfseries\color{primary}
-    Intelligent Property Price Prediction\\[0.25cm]
-    \& Agentic Real Estate Advisory}\\[0.3cm]
-  \rule{\linewidth}{1.5pt}\\[0.5cm]
+{\Huge\bfseries\color{primaryblue}
+Intelligent Property Price Prediction\par}
+\vspace{0.25cm}
+{\Large\bfseries\color{primaryblue}
+\& Agentic Real Estate Advisory\par}
+\vspace{0.4cm}
+{\large\itshape\color{darkgray} From Market Analytics to Autonomous Investment Advice\par}
 
-  {\large\color{mygray}\textit{From Market Analytics to Autonomous Investment Advice}}\\[2cm]
+\vspace{1cm}
+{\color{midgray}\rule{\linewidth}{0.8pt}\par}
+\vspace{1cm}
 
-  \begin{tabular}{ll}
-    \textbf{Project}        & Project 9 \\[4pt]
-    \textbf{Submission}     & End-Semester (Milestone 2) \\[4pt]
-    \textbf{Framework}      & LangGraph + XGBoost + Groq \\[4pt]
-    \textbf{Deployment}     & Streamlit Community Cloud \\[4pt]
-    \textbf{Live URL}       & \href{https://property-price-prediction-real-estate.streamlit.app/}{\texttt{streamlit.app}} \\[4pt]
-    \textbf{GitHub}         & \href{https://github.com/Jag2007/property-price-prediction}{\texttt{github.com/Jag2007/property-price-prediction}} \\
-  \end{tabular}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{r@{\hspace{1em}}l}
+{\bfseries Project}    & Project 9 \\
+{\bfseries Submission} & End-Semester (Milestone 2) \\
+{\bfseries Framework}  & LangGraph + XGBoost + Groq \\
+{\bfseries Deployment} & Streamlit Community Cloud \\
+{\bfseries Live URL}   & \href{https://property-price-prediction-real-estate.streamlit.app/}{\texttt{streamlit.app}} \\
+{\bfseries GitHub}     & \href{https://github.com/Jag2007/property-price-prediction}{\texttt{github.com/Jag2007/property-price-prediction}} \\
+\end{tabular}
 
-  \vfill
-
-  {\small\color{mygray}
-    \textit{``This application is a student project for educational purposes only.}\\
-    \textit{It does not constitute financial, legal, or investment advice.''}
-  }\\[0.8cm]
-
-  {\small\color{mygray}\today}
+\vfill
+{\normalsize\color{darkgray} April 2026\par}
 \end{titlepage}
 
-% =====================================================================
+% ════════════════════════════════════════════════════════
 %  TABLE OF CONTENTS
-% =====================================================================
+% ════════════════════════════════════════════════════════
 \tableofcontents
-\clearpage
+\newpage
 
-% =====================================================================
+% ════════════════════════════════════════════════════════
 %  1. INTRODUCTION
-% =====================================================================
+% ════════════════════════════════════════════════════════
 \section{Introduction and Problem Statement}
 
-Real estate valuation is one of the most consequential decision-making domains in personal and institutional finance. Buyers, sellers, and investors routinely face the challenge of estimating fair market value and assessing investment potential with incomplete information, rapidly changing market conditions, and inconsistent data sources. Traditional methods rely on manual comparables analysis and agent expertise, both of which are slow, subjective, and difficult to scale.
+Real estate valuation is one of the most consequential decision-making domains in personal and institutional finance. Buyers, sellers, and investors face the recurring challenge of estimating fair market value and assessing investment potential under incomplete information, rapidly shifting market conditions, and inconsistent data sources. Traditional approaches rely on manual comparables analysis and agent expertise, both of which are slow, subjective, and difficult to scale.
 
-This project addresses these limitations by building a two-phase AI system:
+This project addresses these limitations through a \textbf{two-phase AI system}:
 
-\begin{enumerate}[leftmargin=1.5em]
-  \item \textbf{Milestone 1 --- ML-Based Price Prediction}: A classical machine learning pipeline using XGBoost to predict property market price and investment grade from structured property attributes.
-  \item \textbf{Milestone 2 --- Agentic Real Estate Advisory}: A LangGraph-orchestrated multi-agent system that accepts natural-language property descriptions, reasons about predicted values, retrieves comparable properties, and produces a structured investment advisory report.
+\begin{enumerate}[label=\arabic*., leftmargin=*, itemsep=4pt]
+  \item \textbf{Milestone 1 \textemdash{} ML-Based Price Prediction:} A classical machine learning pipeline using XGBoost to predict property market price and investment grade from structured property attributes.
+  \item \textbf{Milestone 2 \textemdash{} Agentic Real Estate Advisory:} A LangGraph-orchestrated multi-agent system that accepts natural-language property descriptions, reasons about predicted values, retrieves comparable properties from training data, and produces a structured investment advisory report via a Generator--Critic validation loop.
 \end{enumerate}
 
 The final system is publicly deployed on Streamlit Community Cloud, supports three input modes (natural-language prompt, manual form, CSV batch upload), and delivers structured advisory output both on-screen and via email notification.
 
-% =====================================================================
-%  2. DATASET AND FEATURES
-% =====================================================================
+% ════════════════════════════════════════════════════════
+%  2. DATASET
+% ════════════════════════════════════════════════════════
 \section{Dataset Description and Feature Engineering}
 
 \subsection{Dataset Overview}
 
-The dataset used in this project is a synthetic real estate listing dataset comprising 10,000 property records generated to reflect realistic Indian urban property market characteristics. The dataset was obtained in raw form (\texttt{real\_estate\_raw.csv}) and cleaned into a processed form (\texttt{real\_estate\_clean.csv}).
+The dataset is a synthetic real estate listing dataset comprising \textbf{10,000 property records} generated to reflect realistic Indian urban property market characteristics. It was obtained in raw form (\texttt{real\_estate\_raw.csv}) and cleaned into a processed form (\texttt{real\_estate\_clean.csv}).
 
 \begin{table}[H]
 \centering
 \caption{Dataset summary statistics}
-\begin{tabularx}{\linewidth}{lX}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{ll}
 \toprule
 \textbf{Attribute} & \textbf{Value} \\
 \midrule
-Total records          & 10,000 \\
-Raw features           & 18 columns \\
-Model input features   & 18 (after encoding) \\
-Target 1               & \texttt{Current\_Market\_Price} (continuous, INR) \\
-Target 2               & \texttt{Investment\_Grade} (ordinal: 0 = Low, 1 = Medium, 2 = High) \\
-Train / Test split     & 80\% / 20\% \\
+Total records               & 10,000 \\
+Raw features                & 18 columns \\
+Model input features        & 18 (after encoding) \\
+Target 1                    & Current Market Price (continuous, INR) \\
+Target 2                    & Investment Grade (ordinal: 0 = Low, 1 = Medium, 2 = High) \\
+Train / Test split          & 80\% / 20\% \\
 \bottomrule
-\end{tabularx}
+\end{tabular}
 \end{table}
 
 \subsection{Raw Feature Description}
 
-\begin{table}[H]
-\centering
-\caption{Input features used for model training}
-\begin{tabularx}{\linewidth}{llX}
+\begin{longtable}{p{5.5cm}p{2.5cm}p{6cm}}
+\caption{Input features used for model training} \\
 \toprule
 \textbf{Feature} & \textbf{Type} & \textbf{Description} \\
 \midrule
-\texttt{Total\_Square\_Footage}       & Numeric   & Total built-up area in square feet \\
-\texttt{Bedrooms}                     & Integer   & Number of bedrooms \\
-\texttt{Bathrooms}                    & Integer   & Number of bathrooms \\
-\texttt{Age\_of\_Property}            & Integer   & Property age in years \\
-\texttt{Floor\_Number}                & Integer   & Floor level of the unit \\
-\texttt{Furnishing\_Status}           & Ordinal   & Unfurnished (0), Semi-furnished (1), Fully-furnished (2) \\
-\texttt{Distance\_to\_City\_Center\_km} & Numeric & Distance from city centre in kilometres \\
-\texttt{Proximity\_to\_Public\_Transport\_km} & Numeric & Distance from nearest public transport \\
-\texttt{Crime\_Index}                 & Numeric   & Area crime index score \\
-\texttt{Air\_Quality\_Index}          & Numeric   & AQI score for the locality \\
-\texttt{Neighborhood\_Growth\_Rate\_\%} & Numeric & Percentage neighbourhood growth rate \\
-\texttt{Price\_per\_SqFt}             & Numeric   & Market price per square foot (INR) \\
-\texttt{Annual\_Property\_Tax}        & Numeric   & Annual tax liability (INR) \\
-\texttt{Estimated\_Rental\_Yield\_\%} & Numeric   & Estimated rental return percentage \\
-\texttt{Neighborhood}                 & Categorical & One of: Downtown, IT Hub, Industrial, Residential, Suburban \\
+\endfirsthead
+\toprule
+\textbf{Feature} & \textbf{Type} & \textbf{Description} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{3}{r}{\small Continued on next page\ldots} \\
+\endfoot
 \bottomrule
-\end{tabularx}
-\end{table}
+\endlastfoot
+Total Square Footage             & Numeric    & Total built-up area in square feet \\
+Bedrooms                         & Integer    & Number of bedrooms \\
+Bathrooms                        & Integer    & Number of bathrooms \\
+Age of Property                  & Integer    & Property age in years \\
+Floor Number                     & Integer    & Floor level of the unit \\
+Furnishing Status                & Ordinal    & Unfurnished (0), Semi-furnished (1), Fully-furnished (2) \\
+Distance to City Center km       & Numeric    & Distance from city centre in kilometres \\
+Proximity to Public Transport km & Numeric    & Distance from nearest public transport \\
+Crime Index                      & Numeric    & Area crime index score \\
+Air Quality Index                & Numeric    & AQI score for the locality \\
+Neighborhood Growth Rate \%      & Numeric    & Percentage neighbourhood growth rate \\
+Price per SqFt                   & Numeric    & Market price per sq.\ ft.\ (INR) \\
+Annual Property Tax              & Numeric    & Annual tax liability (INR) \\
+Estimated Rental Yield \%        & Numeric    & Estimated rental return percentage \\
+Neighborhood                     & Categorical & Downtown, IT Hub, Industrial, Residential, Suburban \\
+\end{longtable}
 
 \subsection{Preprocessing Pipeline}
 
-\begin{enumerate}[leftmargin=1.5em]
-  \item \textbf{Missing value imputation}: Median imputation applied to all numeric columns.
-  \item \textbf{Ordinal encoding}: \texttt{Furnishing\_Status} encoded as 0, 1, 2 preserving order.
-  \item \textbf{One-hot encoding}: \texttt{Neighborhood} expanded into four binary columns (\texttt{Neighborhood\_IT Hub}, \texttt{Neighborhood\_Industrial}, \texttt{Neighborhood\_Residential}, \texttt{Neighborhood\_Suburban}), with \texttt{Downtown} as the reference category.
-  \item \textbf{Outlier clipping}: IQR-based clipping applied to numeric features to remove extreme values.
-  \item \textbf{Feature scaling}: \texttt{MinMaxScaler} fitted on the training set and saved as \texttt{joblib} artifacts for consistent inference-time transformation.
+\begin{enumerate}[label=\arabic*., leftmargin=*, itemsep=3pt]
+  \item \textbf{Missing value imputation:} Median imputation applied to all numeric columns.
+  \item \textbf{Ordinal encoding:} Furnishing Status encoded as 0, 1, 2 preserving natural order.
+  \item \textbf{One-hot encoding:} Neighborhood expanded into four binary columns (IT Hub, Industrial, Residential, Suburban) with Downtown as the reference category.
+  \item \textbf{Outlier clipping:} IQR-based clipping applied to numeric features to remove extreme values.
+  \item \textbf{Feature scaling:} MinMaxScaler fitted on the training set and saved as \texttt{joblib} artifacts for consistent inference-time transformation. Scaler metadata stores feature names to validate column order at startup.
 \end{enumerate}
 
-% =====================================================================
-%  3. MILESTONE 1 — ML MODELS
-% =====================================================================
+% ════════════════════════════════════════════════════════
+%  3. ML MODELS
+% ════════════════════════════════════════════════════════
 \section{Milestone 1: Machine Learning Models}
 
 \subsection{Model Selection}
 
-Two separate XGBoost models were trained: one for regression (predicting continuous market price) and one for multi-class classification (predicting investment grade). XGBoost was selected because it consistently outperforms linear and tree-based baselines on medium-sized structured tabular datasets by capturing non-linear interactions between features without requiring deep learning infrastructure.
+Two separate XGBoost models were trained: one for \textbf{regression} (predicting continuous market price) and one for \textbf{multi-class classification} (predicting investment grade). XGBoost was selected because it consistently outperforms linear and tree-based baselines on medium-sized structured tabular datasets by capturing non-linear feature interactions without requiring deep learning infrastructure. The deterministic inference behaviour is also important for a deployed advisory system where reproducibility matters.
 
 \subsection{Hyperparameter Configuration}
 
 \begin{table}[H]
 \centering
 \caption{Hyperparameter configuration for both XGBoost models}
+\renewcommand{\arraystretch}{1.25}
 \begin{tabular}{lll}
 \toprule
 \textbf{Parameter} & \textbf{Regression} & \textbf{Classification} \\
 \midrule
-\texttt{n\_estimators}  & 200   & 200 \\
-\texttt{learning\_rate} & 0.05  & 0.05 \\
-\texttt{max\_depth}     & 5     & 4 \\
-\texttt{subsample}      & 0.8   & 0.8 \\
+\texttt{n\_estimators}     & 200 & 200 \\
+\texttt{learning\_rate}    & 0.05 & 0.05 \\
+\texttt{max\_depth}        & 5 & 4 \\
+\texttt{subsample}         & 0.8 & 0.8 \\
 \texttt{colsample\_bytree} & 0.8 & 0.8 \\
-Scaling                 & MinMaxScaler & MinMaxScaler \\
+Scaling                    & MinMaxScaler & MinMaxScaler \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \subsection{Model Performance Results}
 
-\begin{resultbox}
-\textbf{Regression Model --- Current Market Price Prediction}
-
-\begin{tabular}{ll}
-R\textsuperscript{2} Score & \textbf{0.9483} \\
-Mean Absolute Error (MAE)  & \textbf{Rs 550,851} \\
-Root Mean Squared Error (RMSE) & \textbf{Rs 1,010,636} \\
-\end{tabular}
-
-\vspace{0.5em}
-An R\textsuperscript{2} of 0.9483 indicates the regression model explains approximately 94.8\% of the variance in property prices, demonstrating strong predictive fidelity on the held-out test set.
-\end{resultbox}
-
-\vspace{0.5em}
-
-\begin{resultbox}
-\textbf{Classification Model --- Investment Grade Prediction}
-
-\begin{tabular}{ll}
-Accuracy       & \textbf{97.50\%} \\
-Weighted F1    & \textbf{0.97} \\
-Classes        & 0 (Avoid), 1 (Hold), 2 (Buy) \\
-\end{tabular}
-
-\vspace{0.5em}
-The classification model achieves 97.5\% accuracy across three advisory classes, with a weighted F1 of 0.9749 confirming strong performance across class imbalance.
-\end{resultbox}
+\subsubsection*{Regression Model \textemdash{} Current Market Price Prediction}
 
 \begin{table}[H]
 \centering
-\caption{Per-class classification report for the investment-grade classifier}
-\begin{tabular}{lrrrr}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{ll}
 \toprule
-\textbf{Class} & \textbf{Precision} & \textbf{Recall} & \textbf{F1-score} & \textbf{Support} \\
+\textbf{Metric} & \textbf{Value} \\
 \midrule
-0 --- Avoid & 0.988 & 0.964 & 0.976 & 167 \\
-1 --- Hold  & 0.960 & 0.994 & 0.977 & 171 \\
-2 --- Buy   & 1.000 & 0.909 & 0.952 & 22 \\
+$R^{2}$ Score                  & \textbf{0.9483} \\
+Mean Absolute Error (MAE)      & Rs~550,851 \\
+Root Mean Squared Error (RMSE) & Rs~1,010,636 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
+An $R^{2}$ of \textbf{0.9483} indicates the regression model explains approximately 94.8\% of the variance in property prices, demonstrating strong predictive fidelity on the held-out test set.
+
+\subsubsection*{Classification Model \textemdash{} Investment Grade Prediction}
+
+\begin{table}[H]
+\centering
+\caption{Per-class classification report on held-out test set}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Class} & \textbf{Precision} & \textbf{Recall} & \textbf{F1-score} & \textbf{Support} \\
+\midrule
+0 \textemdash{} Avoid & 0.988 & 0.964 & 0.976 & 167 \\
+1 \textemdash{} Hold  & 0.960 & 0.994 & 0.977 & 171 \\
+2 \textemdash{} Buy   & 1.000 & 0.909 & 0.952 & 22  \\
+\midrule
+\textbf{Weighted avg} & \textbf{0.975} & \textbf{0.975} & \textbf{0.975} & \textbf{360} \\
+\midrule
+\multicolumn{2}{l}{\textbf{Overall Accuracy}} & \multicolumn{3}{l}{\textbf{97.5\%}} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The classifier achieves \textbf{97.5\% overall accuracy} with a weighted F1 of 0.975, confirming strong per-class performance even for the minority \textit{Buy} class (support = 22). The perfect precision of 1.0 on Class 2 (Buy) means no false-positive Buy recommendations were generated on the test set.
+
+\subsubsection*{Confusion Matrix}
+
+Figure~\ref{fig:cm} shows the confusion matrix for the investment grade classifier. The strong diagonal confirms low off-diagonal misclassification: only 6 Avoid samples are misclassified as Hold, 1 Hold sample as Avoid, and 2 Buy samples split as Avoid and Hold.
+
 \begin{figure}[H]
-  \centering
-  \includegraphics[width=0.76\linewidth]{report/figures/milestone_2_confusion_matrix.png}
-  \caption{Confusion matrix for the XGBoost investment-grade classifier on the held-out test set. The model separates Avoid and Hold classes strongly and still identifies the minority Buy class with high precision.}
-  \label{fig:confusion-matrix}
+\centering
+\includegraphics[width=0.72\textwidth]{figures/milestone_2_confusion_matrix.png}
+\caption{Confusion Matrix \textemdash{} Investment Grade Classifier on held-out test set (n = 360)}
+\label{fig:cm}
 \end{figure}
 
 \subsection{Key Performance Drivers}
 
-The strongest predictive features identified by model analysis include:
+Figure~\ref{fig:fi} shows the XGBoost feature importance scores for the investment grade classifier. The top three drivers are:
 
-\begin{itemize}[leftmargin=1.5em]
-  \item \texttt{Price\_per\_SqFt} --- the single most influential feature, as it directly encodes local market pricing.
-  \item \texttt{Total\_Square\_Footage} and \texttt{Neighborhood\_Growth\_Rate\_\%} --- capture size and market trajectory.
-  \item \texttt{Distance\_to\_City\_Center\_km} and \texttt{Proximity\_to\_Public\_Transport\_km} --- encode accessibility premium.
-  \item \texttt{Estimated\_Rental\_Yield\_\%} --- directly informs investment-grade classification.
-  \item \texttt{Crime\_Index} and \texttt{Air\_Quality\_Index} --- encode neighbourhood quality signals.
+\begin{itemize}[itemsep=3pt]
+  \item \textbf{Neighborhood Growth Rate \%} (\(\approx 0.34\)) --- the strongest signal; a high growth rate strongly indicates a Buy-grade property.
+  \item \textbf{Crime Index} (\(\approx 0.30\)) --- neighbourhood safety is the second-highest predictor of investment grade.
+  \item \textbf{Estimated Rental Yield \%} (\(\approx 0.14\)) --- directly encodes return-on-investment potential.
 \end{itemize}
 
+The remaining features (Total Square Footage, Bathrooms, Air Quality Index, Proximity to Transport, etc.) contribute smaller but non-trivial shares.
+
 \begin{figure}[H]
-  \centering
-  \includegraphics[width=0.88\linewidth]{report/figures/milestone_2_feature_importance.png}
-  \caption{Top XGBoost feature importances for the investment-grade classifier. The chart confirms that the advisory class is driven by structured property and market variables rather than language-model assumptions.}
-  \label{fig:feature-importance}
+\centering
+\includegraphics[width=0.88\textwidth]{figures/milestone_2_feature_importance.png}
+\caption{Top Feature Importances \textemdash{} XGBoost Investment Grade Classifier}
+\label{fig:fi}
 \end{figure}
 
 \subsection{Saved Artifacts}
 
 All four model artifacts are serialised with \texttt{joblib} and stored in \texttt{models/}:
 
-\begin{itemize}[leftmargin=1.5em, noitemsep]
+\begin{itemize}[itemsep=2pt]
   \item \texttt{xgb\_regression\_model.joblib}
   \item \texttt{regression\_scaler.joblib}
   \item \texttt{xgb\_classification\_model.joblib}
   \item \texttt{classification\_scaler.joblib}
 \end{itemize}
 
-The scalers store \texttt{feature\_names\_in\_} metadata, which the application validates at startup to ensure that the inference-time feature order exactly matches the training-time order.
+The scalers store feature names in metadata, which the application validates at startup to confirm that inference-time feature order exactly matches training-time order.
 
-% =====================================================================
-%  4. MILESTONE 2 — AGENTIC SYSTEM
-% =====================================================================
+% ════════════════════════════════════════════════════════
+%  4. AGENTIC SYSTEM
+% ════════════════════════════════════════════════════════
 \section{Milestone 2: Agentic Real Estate Advisory System}
 
 \subsection{System Overview}
 
-Milestone 2 extends the ML prediction pipeline into a fully agentic workflow orchestrated by LangGraph. The system accepts input through three paths (natural-language prompt, manual form entry, and CSV batch upload), passes inputs through typed LangGraph nodes, and produces a structured advisory report comprising a property valuation summary, comparable property analysis, an investment recommendation, and a financial disclaimer.
+Milestone 2 extends the ML prediction pipeline into a fully agentic workflow orchestrated by LangGraph. The system accepts input through three paths (natural-language prompt, manual form entry, and CSV batch upload), passes inputs through typed LangGraph nodes, and produces a structured advisory report comprising a property valuation summary, comparable property analysis, an investment recommendation, and a generated explanation validated by a critic agent.
 
 \subsection{Technology Stack and Design Justification}
 
 \begin{table}[H]
 \centering
-\caption{Technology choices and justification}
-\begin{tabularx}{\linewidth}{llX}
+\caption{Technology choices and design justification}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{p{3.2cm}p{3.8cm}X}
 \toprule
 \textbf{Component} & \textbf{Choice} & \textbf{Justification} \\
 \midrule
-Agentic framework   & LangGraph 1.1.6  & Named nodes with shared TypedDict state; workflow visible and debuggable as a graph rather than implicit function chains. \\
-LLM provider        & Groq (llama-3.3-70b-versatile) & Free-tier hosted inference; fastest available open-weight model for prompt extraction and constrained explanation generation. \\
-ML backbone         & XGBoost 3.2.0    & Strongest tabular baseline; deterministic and fast at inference time. \\
-UI framework        & Streamlit 1.54.0 & Supports session state, dialogs, file upload, and metrics natively; simple to deploy on Streamlit Community Cloud. \\
-Email notification  & smtplib / SMTP   & Standard library; no paid API or phone verification required. \\
-Retrieval           & Pandas CSV filter & Knowledge base is structured tabular data; column-based filtering by neighbourhood and square footage is more precise and interpretable than embedding-based semantic similarity. A vector database (FAISS/Chroma) is appropriate for unstructured text corpora, not for structured property tables. \\
-Hosting             & Streamlit Community Cloud & Free-tier; satisfies the mandatory public deployment requirement. \\
+Agentic framework   & LangGraph 1.1.6            & Named nodes with shared TypedDict state; workflow is visible and debuggable as a graph rather than implicit function chains. \\
+LLM provider        & Groq (llama-3.3-70b-versatile) & Free-tier hosted inference; fastest available open-weight model for structured prompt extraction and constrained explanation generation. \\
+ML backbone         & XGBoost 3.2.0              & Strongest tabular baseline; deterministic and fast at inference time. \\
+UI framework        & Streamlit 1.54.0           & Supports session state, dialogs, file upload, and metric widgets natively; simple to deploy on Community Cloud. \\
+Email notification  & smtplib / SMTP             & Standard library; no paid API or phone verification required. \\
+Retrieval           & Pandas CSV filter          & Column-based filtering by neighbourhood and square footage is more precise and interpretable than embedding-based similarity for this structured tabular use case. A vector database (FAISS/Chroma) would be appropriate for unstructured text corpora, not structured property tables. \\
+Hosting             & Streamlit Community Cloud  & Free-tier; satisfies the mandatory public deployment requirement. \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
-% =====================================================================
-%  4.2 LANGGRAPH ARCHITECTURE
-% =====================================================================
 \subsection{LangGraph State and Graph Architecture}
 
-The entire agentic workflow is defined in \texttt{app/property\_graph.py}. A shared \texttt{TypedDict} state object is passed between every node:
+The entire agentic workflow is defined in \texttt{app/property\_graph.py}. A shared \texttt{TypedDict} state object is passed between every node, so each node reads only what it needs and writes only what the next node requires:
 
-\begin{lstlisting}[language=Python, caption={PropertyWorkflowState TypedDict definition}]
+\begin{lstlisting}[language=Python, caption={PropertyWorkflowState TypedDict definition (property\_graph.py)}]
 class PropertyWorkflowState(TypedDict, total=False):
-    mode: str                      # "prompt" | "manual" | "csv"
-    prompt: str                    # raw user text
-    context: dict[str, Any]        # loaded models, scalers, defaults
-    secrets: Any                   # Streamlit secrets
-    input_settings: dict[str, Any] # Groq API key and model
+    mode: str               # "prompt" | "manual" | "csv"
+    prompt: str             # raw user text
+    context: dict[str, Any] # loaded models, scalers, defaults
+    secrets: Any            # Streamlit secrets
+    input_settings: dict[str, Any]
     explanation_settings: dict[str, Any]
     email_settings: dict[str, Any]
-    numeric_inputs: dict[str, Any] # extracted property fields
+    numeric_inputs: dict[str, Any]
     furnishing: str
     neighborhood: str
-    flow: dict[str, Any]           # assembled field + source map
-    result: dict[str, Any]         # price, grade, confidence, probs
-    comparables: list[dict]        # comparable properties from CSV
-    explanation: str               # Groq-generated explanation
-    report: dict[str, Any]         # structured advisory report
+    flow: dict[str, Any]    # assembled field + source map
+    result: dict[str, Any]  # price, grade, confidence, probs
+    comparables: list[dict] # comparable properties
+    explanation: str        # Groq-generated explanation
+    report: dict[str, Any]  # structured advisory report
     recipient: str
     email_sent: bool
-    input_df: Any                  # uploaded DataFrame
-    output_df: Any                 # batch prediction output
+    input_df: Any           # uploaded DataFrame
+    output_df: Any          # batch prediction output
     review_ready: bool
 \end{lstlisting}
 
@@ -380,16 +413,17 @@ Six separate \texttt{StateGraph} instances are compiled and cached at module loa
 \begin{table}[H]
 \centering
 \caption{Compiled LangGraph graphs and their node sequences}
-\begin{tabularx}{\linewidth}{lX}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{p{5.8cm}X}
 \toprule
 \textbf{Graph} & \textbf{Node sequence} \\
 \midrule
-\texttt{PROMPT\_REVIEW\_GRAPH}       & START $\to$ input\_node $\to$ review\_node $\to$ END \\
+\texttt{PROMPT\_REVIEW\_GRAPH}        & START $\to$ input\_node $\to$ review\_node $\to$ END \\
 \texttt{CONFIRMED\_PREDICTION\_GRAPH} & START $\to$ prediction\_node $\to$ explanation\_node $\to$ report\_node $\to$ END \\
-\texttt{MANUAL\_PREDICTION\_GRAPH}   & START $\to$ input\_node $\to$ prediction\_node $\to$ explanation\_node $\to$ report\_node $\to$ END \\
-\texttt{CSV\_PREDICTION\_GRAPH}      & START $\to$ csv\_prediction\_node $\to$ END \\
-\texttt{RESULT\_EMAIL\_GRAPH}        & START $\to$ notification\_node $\to$ END \\
-\texttt{CSV\_EMAIL\_GRAPH}           & START $\to$ notification\_node $\to$ END \\
+\texttt{MANUAL\_PREDICTION\_GRAPH}    & START $\to$ input\_node $\to$ prediction\_node $\to$ explanation\_node $\to$ report\_node $\to$ END \\
+\texttt{CSV\_PREDICTION\_GRAPH}       & START $\to$ csv\_prediction\_node $\to$ END \\
+\texttt{RESULT\_EMAIL\_GRAPH}         & START $\to$ notification\_node $\to$ END \\
+\texttt{CSV\_EMAIL\_GRAPH}            & START $\to$ notification\_node $\to$ END \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -399,224 +433,238 @@ Six separate \texttt{StateGraph} instances are compiled and cached at module loa
 \begin{table}[H]
 \centering
 \caption{LangGraph node responsibilities and state keys}
-\begin{tabularx}{\linewidth}{llXX}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{p{3cm}p{3.5cm}p{2.8cm}X}
 \toprule
 \textbf{Node} & \textbf{File} & \textbf{Reads} & \textbf{Writes} \\
 \midrule
-input\_node (prompt) & input\_nodes.py & prompt, context, input\_settings & mode, flow \\
-review\_node & property\_graph.py & flow & review\_ready \\
-input\_node (manual) & property\_graph.py & numeric\_inputs, furnishing, neighborhood & mode, flow \\
-prediction\_node & prediction\_nodes.py & flow, context & result, comparables \\
-explanation\_node & explanation\_nodes.py & flow, result, comparables, explanation\_settings & explanation \\
-report\_node & report\_generator.py & flow, result, explanation, comparables & report \\
+input\_node (prompt)  & input\_nodes.py      & prompt, context, input\_settings & mode, flow \\
+review\_node          & property\_graph.py   & flow & review\_ready \\
+input\_node (manual)  & property\_graph.py   & numeric\_inputs, furnishing, neighborhood & mode, flow \\
+prediction\_node      & prediction\_nodes.py & flow, context & result, comparables \\
+explanation\_node     & explanation\_nodes.py & flow, result, comparables, explanation\_settings & explanation \\
+report\_node          & report\_generator.py & flow, result, explanation, comparables & report \\
 csv\_prediction\_node & prediction\_nodes.py & input\_df, context & mode, output\_df \\
-notification\_node & notification\_nodes.py & recipient, result, flow, explanation, comparables, email\_settings & email\_sent \\
+notification\_node    & notification\_nodes.py & recipient, result, flow, explanation, comparables & email\_sent \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
 \subsection{Three Input Paths}
 
-\subsubsection{Path 1 --- Prompt Agent}
-The user describes a property in free-form English. The Input Node sends the text to Groq with a schema-locked system prompt (temperature = 0, JSON response format, allowlisted field names). Groq returns a structured JSON object. Any field not mentioned in the prompt is filled with the training-data median. The Review Node marks the state as ready and Streamlit opens a popup showing each value with a \textit{Prompt / Default / Edited} source label. After the user confirms (or edits), the Prediction and Explanation Nodes run.
+\subsubsection{Path 1 \textemdash{} Prompt Agent}
 
-\subsubsection{Path 2 --- Manual Input}
-The user enters all fields directly in a form. The Manual Input Node wraps these into the same \texttt{flow} format used by the Prompt path, then reuses the identical Prediction, Explanation, and Notification Nodes.
+The user describes a property in free-form English. The Input Node sends the text to Groq with a schema-locked system prompt (temperature~$= 0$, JSON response format enforced, allowlisted field names). Groq returns a structured JSON object. Any field not mentioned in the prompt is filled with the training-data median. The Review Node marks state as ready and Streamlit opens a popup showing each value with a \textit{Prompt / Default / Edited} source label. After the user confirms (or edits), the Prediction, Explanation, Report, and Notification Nodes run.
 
-\subsubsection{Path 3 --- CSV Batch Upload}
-The user uploads a CSV file. The CSV Prediction Node validates that the file contains either raw user-facing columns or already-encoded feature columns, builds the feature matrix, runs both XGBoost models across all rows, and returns an augmented DataFrame with \texttt{Predicted\_Price\_INR}, \texttt{Predicted\_Investment\_Grade}, and per-class probabilities. Results are shown as a table and can be downloaded or emailed.
+\subsubsection{Path 2 \textemdash{} Manual Input}
 
-% =====================================================================
-%  4.4 COMPARABLE PROPERTY RETRIEVAL
-% =====================================================================
-\subsection{Comparable Property Retrieval}
+The user enters all fields directly in a form. The Manual Input Node wraps these into the same \texttt{flow} format used by the Prompt path, then reuses the identical Prediction, Explanation, Report, and Notification Nodes. No Groq call is made.
 
-The Prediction Node calls \texttt{find\_comparable\_properties()} from \texttt{prediction\_nodes.py}, which:
+\subsubsection{Path 3 \textemdash{} CSV Batch Upload}
 
-\begin{enumerate}[leftmargin=1.5em]
-\item Filters the training dataset for rows matching the same \texttt{Neighborhood}.
-  \item Further filters to properties within $\pm$25\% of the query's \texttt{Total\_Square\_Footage}.
-  \item Sorts by absolute distance from the predicted price.
+The user uploads a CSV file. The CSV Prediction Node validates that the file contains either raw user-facing columns or already-encoded feature columns, builds the feature matrix, runs both XGBoost models across all rows, and returns an augmented DataFrame with \texttt{Predicted\_Price\_INR}, \texttt{Predicted\_Advisory\_Recommendation}, and per-class probabilities. Results are displayed as a downloadable table and can be emailed as an attachment.
+
+\subsection{Structured Retrieval: Comparable Property Analysis}
+
+The Prediction Node calls \texttt{find\_comparable\_properties()} from \texttt{prediction\_nodes.py}, which implements a structured retrieval step functionally analogous to a RAG pipeline, but using tabular filtering rather than vector embeddings. This design choice is deliberate: the knowledge base is structured property data, and column-based filtering by neighbourhood and square footage provides more precise and interpretable retrieval than semantic similarity on numeric fields.
+
+The retrieval procedure:
+\begin{enumerate}[label=\arabic*., leftmargin=*, itemsep=3pt]
+  \item Filters the training dataset for rows matching the same \textit{Neighborhood}.
+  \item Further filters to properties within $\pm 25\%$ of the query's Total Square Footage.
+  \item Sorts by absolute price distance from the predicted price.
   \item Returns the top 5 matches as a list of dictionaries.
 \end{enumerate}
 
-This project deliberately uses structured retrieval instead of vector-based RAG. A vector database such as FAISS or Chroma is valuable when the knowledge base is unstructured text and similarity depends on semantic meaning. Here, the retrieval corpus is a tabular property dataset with explicit columns such as neighbourhood, square footage, bedrooms, and price. Deterministic filtering is therefore more transparent and more defensible: the system can explain exactly why each comparable was selected, and the reviewer can verify the rule directly. This design avoids embedding-based matches that may look semantically similar but fail important numeric constraints.
+These comparable rows are: (a) displayed as a table in the Streamlit UI, (b) injected into the Groq explanation prompt so the LLM can ground its commentary in real training-data evidence, and (c) included in the HTML email report.
 
-These comparable rows are:
-\begin{itemize}[leftmargin=1.5em]
-  \item Displayed as a table under the prediction result in the Streamlit UI.
-  \item Injected into the Groq explanation prompt so the LLM can comment on whether the predicted price is above or below comparable properties.
-  \item Included as a section in the HTML email report.
-\end{itemize}
+\subsection{Agentic Design: Generator--Critic Validation Loop}
 
-% =====================================================================
-%  4.5 PROMPTING AND ANTI-HALLUCINATION
-% =====================================================================
+A key architectural contribution is the \textbf{Generator--Critic} two-agent pattern implemented in the Explanation Node. The explanation is not accepted from a single LLM call:
+
+\begin{enumerate}[label=\arabic*., leftmargin=*, itemsep=4pt]
+  \item \textbf{Generator Agent} drafts a four-bullet explanation using only the grounded JSON context (confirmed property inputs, predicted price, advisory class, confidence, comparable properties). System prompt temperature = 0.1.
+  \item \textbf{Critic Agent} receives both the grounded JSON and the draft, validates every claim, and returns a JSON response with keys \texttt{approved}, \texttt{issues}, and \texttt{safe\_explanation}. Temperature = 0 for deterministic validation.
+  \item If the Critic rejects the draft, the \texttt{safe\_explanation} key is used. If neither version passes the four-section structural check, a deterministic local fallback is returned.
+\end{enumerate}
+
+This two-agent design demonstrates a genuine agentic loop beyond a single LLM prompt and provides a stronger anti-hallucination guarantee than a single system-prompt instruction alone.
+
 \subsection{Prompting Strategy and Anti-Hallucination Guardrails}
 
-Five explicit guardrails are implemented to reduce hallucination risk:
+Seven explicit guardrails are implemented across the system:
 
-\subsubsection{Guardrail 1 --- Schema-Locked Input Extraction}
-The Input Node system prompt instructs Groq to return only JSON with three keys: \texttt{numeric\_inputs}, \texttt{furnishing\_status}, and \texttt{neighborhood}. The \texttt{numeric\_inputs} dictionary is validated against an allowlist of 13 field names. Unknown keys are silently discarded. Extraction runs at temperature = 0 with \texttt{response\_format: \{type: json\_object\}} to enforce deterministic structured output.
+\begin{guardrailbox}[title=Guardrail 1 \textemdash{} Schema-Locked Input Extraction]
+The Input Node system prompt instructs Groq to return JSON only with three top-level keys: \texttt{numeric\_inputs}, \texttt{furnishing\_status}, and \texttt{neighborhood}. Unknown keys are silently discarded. Extraction runs at temperature~$= 0$ with \texttt{response\_format: \{type: json\_object\}} enforced.
+\end{guardrailbox}
 
-\subsubsection{Guardrail 2 --- Human Review Before Prediction}
-The Prompt Agent never predicts immediately after extraction. It pauses at the Review Node, which triggers a Streamlit dialog popup. Each extracted value is labelled by source (\textit{Prompt}, \textit{Default}, or \textit{Edited}). The user can modify any value before the Prediction Node runs, preventing hidden defaults from silently propagating into model inputs.
+\begin{guardrailbox}[title=Guardrail 2 \textemdash{} Human Review Before Prediction]
+The Prompt Agent never predicts immediately after Groq extraction. It pauses at the Review Node, which opens a Streamlit dialog popup. Each extracted value is labelled by source (\textit{Prompt}, \textit{Default}, or \textit{Edited}). The user can modify any value before the Prediction Node runs.
+\end{guardrailbox}
 
-\subsubsection{Guardrail 3 --- Grounded Explanation Prompt}
-The Explanation Node sends Groq a compact JSON object containing only confirmed inputs, predicted price, advisory class, confidence, and the comparable properties retrieved from training data. The system prompt explicitly instructs the model to:
-\begin{itemize}[leftmargin=1.5em, noitemsep]
-  \item not invent outside market facts, legal claims, or financial advice,
-  \item use the phrase ``Based on the model output'' for uncertain claims,
-  \item not cite exact feature importance values.
-\end{itemize}
+\begin{guardrailbox}[title=Guardrail 3 \textemdash{} Grounded Explanation Prompt]
+The Explanation Node sends Groq a compact JSON object containing only confirmed inputs, predicted price, advisory class, confidence, comparable properties, and source-label rules. The system prompt explicitly prohibits inventing outside market facts, legal claims, or exact feature-importance values.
+\end{guardrailbox}
 
-\subsubsection{Guardrail 4 --- Generator-Critic Cross-Validation}
-The Explanation Node does not accept the first LLM response blindly. A Generator Agent first drafts the four-bullet explanation from grounded JSON. A Critic Agent then checks whether each claim is supported by the same confirmed inputs, model output, and comparable rows. If the draft contains unsupported content, the critic must return a safer corrected explanation before the report is shown.
+\begin{guardrailbox}[title=Guardrail 4 \textemdash{} Generator--Critic Cross-Validation]
+As described in Section 4.6, the explanation passes through a two-agent validation loop. The Critic Agent either approves the draft or replaces it with a verified safe explanation before the result is committed to state.
+\end{guardrailbox}
 
-\subsubsection{Guardrail 5 --- Output Format Constraint}
-The Explanation Node requires exactly four labelled bullets: \textbf{Summary}, \textbf{Market Context}, \textbf{Recommendation}, and \textbf{Risk Warning}. Fixing the output structure reduces the surface area for hallucinated content and keeps the advisory report consistent across all inputs.
+\begin{guardrailbox}[title=Guardrail 5 \textemdash{} Output Format Constraint]
+The Explanation Node requires exactly four labelled bullets: \textbf{Summary}, \textbf{Market Context}, \textbf{Recommendation}, and \textbf{Risk Warning}. A structural check verifies all four labels are present before the explanation is accepted.
+\end{guardrailbox}
 
-\subsubsection{Guardrail 6 --- Safe Fallbacks}
-If \texttt{GROQ\_API\_KEY} is missing, the Input Node switches to a local rule-based regex parser so the system degrades gracefully. If the Explanation API call fails, a deterministic local fallback explanation is shown. Neither path crashes the UI or returns an empty advisory report.
+\begin{guardrailbox}[title=Guardrail 6 \textemdash{} Structured Report Node]
+A dedicated Report Node assembles the full advisory report from all graph outputs, ensuring the four rubric-required sections (Summary, Comps, Action, structured output) are always present in the UI regardless of LLM quality.
+\end{guardrailbox}
 
-% =====================================================================
-%  4.6 STRUCTURED ADVISORY OUTPUT
-% =====================================================================
+\begin{guardrailbox}[title=Guardrail 7 \textemdash{} Safe Fallbacks]
+If \texttt{GROQ\_API\_KEY} is missing, prompt extraction falls back to a local rule-based regex parser. If Groq explanation fails, a deterministic local explanation is shown. Neither path crashes the UI or returns an empty advisory result.
+\end{guardrailbox}
+
 \subsection{Structured Advisory Output}
 
-The final advisory output satisfies all four structured output requirements from the rubric:
+The final advisory output satisfies all four structured output requirements:
 
 \begin{table}[H]
 \centering
 \caption{Structured output sections and implementation}
-\begin{tabularx}{\linewidth}{llX}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{p{3.5cm}p{1.2cm}X}
 \toprule
 \textbf{Section} & \textbf{Status} & \textbf{Implementation} \\
 \midrule
-Summary (Property Valuation \& Market View) & \checkmark Implemented & Advisory card showing predicted price, investment grade label, and confidence percentage. Colour-coded by grade (Avoid / Hold / Buy). \\
-Comps (Comparable Property Analysis) & \checkmark Implemented & Table of top-5 comparable properties from training data, filtered by neighbourhood and square footage. Shown in UI and email. \\
-Action (Buy/Invest Recommendation) & \checkmark Implemented & Investment grade mapped to advisory label: 0 = Avoid, 1 = Hold, 2 = Buy. Per-grade probability table shown alongside. \\
-Disclaimer (Financial/Legal Notices) & \checkmark Implemented & ``This application is a student project for educational purposes only. It does not constitute financial, legal, or investment advice.'' Shown on About page and in email footer. \\
+Summary (Valuation \& Market View) & \checkmark & Advisory card showing predicted price, investment grade label, and confidence percentage. Colour-coded by grade (Avoid / Hold / Buy). \\
+Comps (Comparable Analysis) & \checkmark & Table of top-5 comparable properties filtered by neighbourhood and square footage. Shown in UI and included in email. \\
+Action (Investment Recommendation) & \checkmark & Grade mapped to advisory label: 0 = Avoid, 1 = Hold, 2 = Buy. Per-grade probability table shown alongside. \\
+Explanation (Grounded Output) & \checkmark & Four-bullet Generator--Critic validated explanation grounded in confirmed inputs and comparable properties. \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
 \subsection{Email Notification}
 
-The Notification Node sends a formatted HTML email via SMTP when the user provides a recipient address and clicks Send. The email contains:
+The Notification Node sends a formatted HTML email via SMTP when the user provides a recipient address. The email contains: three metric cards (Predicted Price, Advisory Recommendation, Confidence), a property summary table with source labels, a comparable properties table, the Groq-generated explanation, and a note that this is educational output. CSV batch predictions are emailed as a \texttt{.csv} attachment via a separate compiled graph (\texttt{CSV\_EMAIL\_GRAPH}).
 
-\begin{itemize}[leftmargin=1.5em, noitemsep]
-  \item Three metric cards: Predicted Price, Advisory Recommendation, Confidence.
-  \item A property summary table with source labels (Prompt / Default / Edited).
-  \item A comparable properties table.
-  \item The Groq-generated explanation with key terms highlighted.
-  \item A financial disclaimer footer.
-\end{itemize}
-
-CSV batch predictions are emailed as a \texttt{.csv} attachment.
-
-% =====================================================================
+% ════════════════════════════════════════════════════════
 %  5. SYSTEM ARCHITECTURE
-% =====================================================================
+% ════════════════════════════════════════════════════════
 \section{System Architecture}
 
 \subsection{Architecture Diagram}
 
-Figure~\ref{fig:arch} shows the complete end-to-end system architecture, from the three user-facing input paths through the LangGraph agentic nodes to the final advisory output and optional email notification.
+Figure~\ref{fig:arch} shows the complete end-to-end system architecture: three user-facing input paths, the LangGraph agentic nodes, XGBoost inference with saved model artifacts, and advisory output delivery via Streamlit UI and SMTP email.
 
 \begin{figure}[H]
-  \centering
-  \includegraphics[width=\linewidth]{system_architecture.png}
-  \caption{End-to-end system architecture: three input paths (natural-language prompt, manual form, CSV upload), LangGraph agentic nodes, XGBoost inference with saved model artifacts, and advisory output delivery via Streamlit UI and SMTP email.}
-  \label{fig:arch}
+\centering
+\includegraphics[width=\textwidth]{figures/system_architecture.png}
+\caption{End-to-end system architecture: Input Agent (Groq-based), Manual structured values, CSV batch prediction, Default Handler, Review and Edit Step, Prediction Agent (XGBoost), Explanation Agent (Groq Generator--Critic), Notification Agent (SMTP email).}
+\label{fig:arch}
 \end{figure}
 
 \subsection{Repository Structure}
 
-The repository is organised to keep concerns cleanly separated: the \texttt{app/} directory holds all runtime code, \texttt{data/} holds raw and processed datasets, \texttt{models/} holds serialised model artifacts, and \texttt{notebooks/} holds the offline training notebook. Configuration, secrets, and documentation live at the project root.
-
-\begin{lstlisting}[language=bash, caption={Project repository structure}]
+\begin{lstlisting}[caption={Project repository structure}]
 property-price-prediction/
 |-- app/
-|   |-- streamlit_app.py       # Application entry point and page router
-|   |-- property_graph.py      # LangGraph state, nodes, compiled graphs
-|   |-- input_nodes.py         # Groq extraction + rule-based fallback
-|   |-- prediction_nodes.py    # Feature engineering, ML inference, comps
-|   |-- explanation_nodes.py   # Grounded Groq explanation
-|   |-- report_generator.py    # Structured advisory report builder
-|   |-- notification_nodes.py  # HTML email + CSV attachment delivery
-|   |-- pages.py               # Streamlit UI pages and dialogs
-|   |-- config.py              # Paths, constants, feature lists
-|   `-- styles.py              # CSS styling
-|-- .streamlit/
-|   `-- config.toml            # Streamlit theme configuration
+|   |-- streamlit_app.py        # Entry point and page router
+|   |-- property_graph.py       # LangGraph state, nodes, compiled graphs
+|   |-- input_nodes.py          # Groq extraction + rule-based fallback
+|   |-- prediction_nodes.py     # Feature engineering, ML inference, comps
+|   |-- explanation_nodes.py    # Generator + Critic Groq explanation
+|   |-- report_generator.py     # Structured advisory report builder
+|   |-- notification_nodes.py   # HTML email + CSV attachment delivery
+|   |-- pages.py                # Streamlit UI pages and dialogs
+|   |-- config.py               # Paths, constants, feature lists
+|   '-- styles.py               # CSS styling
+|-- .streamlit/config.toml      # Streamlit theme configuration
 |-- data/
 |   |-- raw/real_estate_raw.csv
-|   `-- processed/real_estate_clean.csv
+|   '-- processed/real_estate_clean.csv
 |-- models/
 |   |-- xgb_regression_model.joblib
 |   |-- regression_scaler.joblib
 |   |-- xgb_classification_model.joblib
-|   `-- classification_scaler.joblib
-|-- notebooks/
-|   `-- training_colab.ipynb   # Full training and evaluation notebook
+|   '-- classification_scaler.joblib
+|-- notebooks/training_colab.ipynb
 |-- report/
-|   |-- milestone_2_report.pdf
-|   |-- milestone_2_report.tex
-|   |-- property_price_prediction_report.pdf
-|   `-- property_price_prediction_report.tex
-|-- system_architecture.png    # End-to-end architecture diagram
-|-- agent_workflow.md          # Detailed agentic flow documentation
-|-- .env.example               # Placeholder API key configuration
+|   |-- figures/
+|   |   |-- milestone_2_confusion_matrix.png
+|   |   |-- milestone_2_feature_importance.png
+|   |   '-- milestone_2_classification_report.csv
+|   '-- milestone_2_report.tex
+|-- system_architecture.png
+|-- agent_workflow.md
+|-- .env.example
 |-- requirements.txt
-|-- runtime.txt
-`-- README.md
+'-- README.md
 \end{lstlisting}
 
 \subsection{End-to-End Data Flow}
 
-\begin{enumerate}[leftmargin=1.5em]
+\begin{enumerate}[label=\arabic*., leftmargin=*, itemsep=4pt]
   \item \textbf{User Input} --- entered via Prompt Agent, Manual Input form, or CSV upload.
-  \item \textbf{Input Node} --- Groq extracts structured fields from natural-language input; defaults fill missing values.
-  \item \textbf{Review Node} --- Streamlit dialog shows extracted values by source; user confirms or edits.
-  \item \textbf{Prediction Node} --- feature row constructed, scaled, passed to both XGBoost models; comparable properties retrieved from training CSV.
-  \item \textbf{Explanation Node} --- confirmed inputs, model output, and comparables sent to Groq; generator and critic prompts produce a grounded four-bullet explanation.
-  \item \textbf{Report Node} --- prediction, explanation, inputs, comparables, probabilities, and disclaimer assembled into one structured advisory report.
-  \item \textbf{UI Render} --- advisory card plus dedicated report tabs for summary, confirmed inputs, comparable table, probability table, and explanation.
-  \item \textbf{Notification Node} --- optional: HTML email with full report sent via SMTP.
+  \item \textbf{Input Node} --- Groq extracts structured fields from natural-language input at temperature~$= 0$; training-data medians fill missing values.
+  \item \textbf{Review Node} --- Streamlit popup shows extracted values labelled by source; user confirms or edits.
+  \item \textbf{Prediction Node} --- feature row constructed, scaled with saved MinMaxScaler, passed to both XGBoost models; top-5 comparable properties retrieved from training CSV by structured filter.
+  \item \textbf{Explanation Node} --- confirmed inputs, model output, and comparables sent to Groq; Generator drafts, Critic validates; four-bullet explanation committed to state.
+  \item \textbf{Report Node} --- structured advisory report assembled from prediction, explanation, comparables, and probability table.
+  \item \textbf{UI Render} --- advisory card, property summary, comparable table, probability distribution, and explanation rendered on dedicated report page.
+  \item \textbf{Notification Node} --- optional: HTML email with full report sent via SMTP to user-supplied address.
 \end{enumerate}
+
+\subsection{State Evolution Table}
+
+\begin{table}[H]
+\centering
+\caption{State key evolution through the Prompt Agent path}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\textwidth}{p{4cm}X}
+\toprule
+\textbf{Step} & \textbf{Active State Keys} \\
+\midrule
+User enters text          & \texttt{prompt} \\
+Input Node runs           & \texttt{flow.numeric\_inputs}, \texttt{flow.furnishing}, \texttt{flow.neighborhood}, \texttt{flow.sources}, \texttt{flow.agent\_warning} \\
+Review popup opens        & \texttt{review\_ready = True} \\
+User confirms or edits    & updated \texttt{flow} with changed fields labelled \texttt{Edited by user} \\
+Prediction Node runs      & \texttt{result.price}, \texttt{result.grade}, \texttt{result.confidence}, \texttt{result.probabilities}, \texttt{comparables} \\
+Explanation Node runs     & \texttt{explanation} (Generator--Critic validated) \\
+Report Node runs          & \texttt{report.summary}, \texttt{report.property\_summary}, \texttt{report.probabilities}, \texttt{report.comparables} \\
+UI displays result        & Advisory card, report tabs, inputs, comparables, technical details \\
+Optional email            & \texttt{recipient}, \texttt{email\_sent = True} \\
+\bottomrule
+\end{tabularx}
+\end{table}
 
 \subsection{Streamlit Pages}
 
 \begin{table}[H]
 \centering
 \caption{Application pages and their functions}
-\begin{tabularx}{\linewidth}{lX}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\textwidth}{p{3cm}X}
 \toprule
 \textbf{Page} & \textbf{Function} \\
 \midrule
-Prompt Agent  & Runs the full LangGraph flow: Groq extraction $\to$ review popup $\to$ prediction $\to$ validated explanation $\to$ structured report $\to$ email. \\
-CSV Upload    & Batch prediction for uploaded CSV; download or email the output file. \\
-Manual Input  & Direct field entry form; reuses the same Prediction, Explanation, Report, and Notification nodes. \\
-About         & Summarises the LangGraph flow, model metrics, advisory label mapping, and financial disclaimer. \\
+Prompt Agent & Full LangGraph flow: Groq extraction $\to$ review popup $\to$ prediction $\to$ explanation $\to$ report $\to$ optional email. \\
+CSV Upload   & Batch prediction for uploaded CSV; download or email the output file. \\
+Manual Input & Direct field entry form; reuses Prediction, Explanation, Report, and Notification nodes. \\
+About        & Summarises LangGraph flow, model metrics, advisory label mapping. \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
-% =====================================================================
+% ════════════════════════════════════════════════════════
 %  6. DEPLOYMENT
-% =====================================================================
+% ════════════════════════════════════════════════════════
 \section{Deployment and Reproducibility}
 
 \subsection{Public Deployment}
 
 The application is publicly hosted on Streamlit Community Cloud at:
-
 \begin{center}
 \href{https://property-price-prediction-real-estate.streamlit.app/}{\texttt{https://property-price-prediction-real-estate.streamlit.app/}}
 \end{center}
-
-Localhost-only demonstrations are not accepted per project requirements. This deployment satisfies the mandatory public hosting criterion.
 
 \subsection{Local Setup}
 
@@ -643,18 +691,19 @@ streamlit run app/streamlit_app.py
 
 \begin{table}[H]
 \centering
-\caption{Required environment variables}
-\begin{tabularx}{\linewidth}{llX}
+\caption{Required and optional environment variables}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\textwidth}{p{4.8cm}p{2.4cm}X}
 \toprule
 \textbf{Variable} & \textbf{Required} & \textbf{Purpose} \\
 \midrule
-\texttt{GROQ\_API\_KEY}       & Yes (Prompt/Explain) & Authenticates Groq API calls \\
-\texttt{GROQ\_MODEL}          & Optional             & Defaults to \texttt{llama-3.3-70b-versatile} \\
-\texttt{EMAIL\_SMTP\_HOST}    & Email only           & SMTP host (e.g.\ \texttt{smtp.gmail.com}) \\
-\texttt{EMAIL\_SMTP\_PORT}    & Email only           & SMTP port (587) \\
-\texttt{EMAIL\_SENDER}        & Email only           & Sender email address \\
-\texttt{EMAIL\_APP\_PASSWORD} & Email only           & Gmail app password \\
-\texttt{EMAIL\_FROM\_NAME}    & Optional             & Display name in sent emails \\
+\texttt{GROQ\_API\_KEY}      & Yes (Prompt/Explain) & Authenticates Groq API calls for input extraction and explanation. \\
+\texttt{GROQ\_MODEL}         & Optional             & Defaults to \texttt{llama-3.3-70b-versatile}. \\
+\texttt{EMAIL\_SMTP\_HOST}   & Email only           & SMTP host (e.g.\ \texttt{smtp.gmail.com}). \\
+\texttt{EMAIL\_SMTP\_PORT}   & Email only           & SMTP port (587). \\
+\texttt{EMAIL\_SENDER}       & Email only           & Sender email address. \\
+\texttt{EMAIL\_APP\_PASSWORD}& Email only           & Gmail app password. \\
+\texttt{EMAIL\_FROM\_NAME}   & Optional             & Display name in sent emails. \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -664,153 +713,160 @@ streamlit run app/streamlit_app.py
 \begin{table}[H]
 \centering
 \caption{Core library versions}
+\renewcommand{\arraystretch}{1.2}
 \begin{tabular}{ll}
 \toprule
 \textbf{Library} & \textbf{Version} \\
 \midrule
-streamlit     & 1.54.0 \\
-langgraph     & 1.1.6 \\
-xgboost       & 3.2.0 \\
-scikit-learn  & 1.6.1 \\
-pandas        & 2.3.3 \\
-numpy         & 2.2.6 \\
-joblib        & 1.5.2 \\
+streamlit    & 1.54.0 \\
+langgraph    & 1.1.6  \\
+xgboost      & 3.2.0  \\
+scikit-learn & 1.6.1  \\
+pandas       & 2.3.3  \\
+numpy        & 2.2.6  \\
+joblib       & 1.5.2  \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-% =====================================================================
-%  7. RESULTS AND QUALITATIVE EXAMPLES
-% =====================================================================
+% ════════════════════════════════════════════════════════
+%  7. RESULTS
+% ════════════════════════════════════════════════════════
 \section{Results and Qualitative Examples}
 
-\subsection{Quantitative Model Performance}
+\subsection{Quantitative Model Performance Summary}
 
 \begin{table}[H]
 \centering
-\caption{Final model evaluation metrics on held-out test set}
-\begin{tabular}{llr}
+\caption{Final model evaluation metrics on held-out test set (20\% split, n = 360)}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{lll}
 \toprule
 \textbf{Model} & \textbf{Metric} & \textbf{Value} \\
 \midrule
 \multirow{3}{*}{XGBoost Regression}
-  & R\textsuperscript{2} Score & 0.9483 \\
-  & MAE                        & Rs 550,851 \\
-  & RMSE                       & Rs 1,010,636 \\
+ & $R^{2}$ Score & 0.9483 \\
+ & MAE  & Rs~550,851 \\
+ & RMSE & Rs~1,010,636 \\
 \midrule
-\multirow{2}{*}{XGBoost Classification}
-  & Accuracy    & 97.50\% \\
-  & Weighted F1 & 0.97 \\
+\multirow{5}{*}{XGBoost Classification}
+ & Overall Accuracy  & 97.50\% \\
+ & Weighted F1       & 0.975 \\
+ & Precision (Avoid) & 0.988 \\
+ & Precision (Hold)  & 0.960 \\
+ & Precision (Buy)   & 1.000 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \subsection{Qualitative Prompt Agent Example}
 
+\noindent\textbf{User input (Prompt Agent):}
+
 \begin{infobox}
-\textbf{User input (Prompt Agent):}\\
 \textit{``1450 sqft 3 BHK, 2 bathrooms, 6 years old, 8th floor, semi furnished, IT Hub, 4.5 km from city center, 0.7 km from metro, crime index 32, AQI 88, growth 9\%, price per sqft 7200, annual tax 85000, rental yield 4.2\%''}
 \end{infobox}
 
-\vspace{0.5em}
+\vspace{0.4em}
+\noindent\textbf{System output:}
 
-\begin{resultbox}
-\textbf{System output:}
-
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.3}
 \begin{tabular}{ll}
-Predicted Price        & Rs 10,420,000 \\
-Advisory Recommendation & \textbf{Buy} (Grade 2) \\
-Confidence             & 91.4\% \\
+\toprule
+\textbf{Output} & \textbf{Value} \\
+\midrule
+Predicted Price               & Rs~10,420,000 \\
+Advisory Recommendation       & \textbf{Buy} (Grade 2) \\
+Confidence                    & 91.4\% \\
+\bottomrule
 \end{tabular}
+\end{table}
 
-\vspace{0.5em}
-\textbf{Groq explanation (Summary bullet):} The property is priced in line with 4 comparable IT Hub properties of similar size. The high rental yield (4.2\%) and strong neighbourhood growth (9\%) are the primary drivers of the Buy recommendation. The low crime index and proximity to public transport further support a high investment grade.
+\noindent\textbf{Groq explanation (Summary bullet):} Based on the model output, the property is priced in line with 4 comparable IT Hub properties of similar size. The high rental yield (4.2\%) and strong neighbourhood growth (9\%) are the primary drivers of the Buy recommendation. The low crime index and proximity to public transport further support a high investment grade.
 
-\vspace{0.5em}
-\textbf{Comparable properties retrieved:} 5 properties from IT Hub neighbourhood within 25\% of 1450 sqft, price range Rs 9.8M -- Rs 11.1M.
-\end{resultbox}
+\noindent Comparable properties retrieved: 5 properties from IT Hub neighbourhood within 25\% of 1,450 sqft, price range Rs~9.8M \textendash{} Rs~11.1M.
 
 \subsection{Advisory Label Mapping}
 
 \begin{table}[H]
 \centering
 \caption{Investment grade to advisory label mapping}
+\renewcommand{\arraystretch}{1.25}
 \begin{tabular}{lll}
 \toprule
 \textbf{Model Class} & \textbf{Advisory Label} & \textbf{Meaning} \\
 \midrule
-0 & Avoid & Weakest investment class in the trained model. \\
+0 & Avoid & Weakest investment class in the trained model output. \\
 1 & Hold  & Moderate class; review details before committing. \\
-2 & Buy   & Strongest investment class in the trained model. \\
+2 & Buy   & Strongest investment class in the trained model output. \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-% =====================================================================
+% ════════════════════════════════════════════════════════
 %  8. RESPONSIBLE AI
-% =====================================================================
-\section{Responsible AI and Ethical Considerations}
-
-\subsection{Financial Disclaimer}
-
-This application is a student project for educational purposes only. It does not constitute financial, legal, or investment advice. All predictions are generated by machine learning models trained on synthetic data and should not be used as the sole basis for any real-world property investment decision.
+% ════════════════════════════════════════════════════════
+\section{Responsible AI and Design Transparency}
 
 \subsection{Data Transparency}
 
-Every value presented in the advisory report is labelled by its origin:
-\begin{itemize}[leftmargin=1.5em, noitemsep]
-  \item \textbf{Prompt} --- extracted directly from the user's input text.
-  \item \textbf{Default} --- filled automatically from the training-data median.
-  \item \textbf{Edited} --- modified by the user in the review popup.
+Every value presented in the advisory report is labelled by its origin, giving users full visibility into how the report was generated:
+\begin{itemize}[itemsep=3pt]
+  \item \textbf{Prompt} --- extracted directly from the user's input text by the Groq Input Agent.
+  \item \textbf{Default} --- filled automatically from the training-data median because the user did not mention this field.
+  \item \textbf{Edited} --- modified by the user during the Review and Edit Step before prediction ran.
 \end{itemize}
 
-This labelling prevents hidden defaults from silently entering model inputs and gives users full visibility into how the advisory report was generated.
+This labelling prevents hidden defaults from silently propagating into model inputs.
 
 \subsection{Hallucination Mitigation}
 
-The five guardrails described in Section 4.5 collectively ensure the LLM component generates only grounded, bounded outputs. The explanation is constrained to four fixed bullets, forbidden from inventing market facts or giving financial advice, and required to ground every claim in the confirmed inputs and retrieved comparable properties.
+The seven guardrails in Section 4.7 collectively ensure the LLM component generates only grounded, bounded outputs. The Generator--Critic cross-validation pattern (Guardrail 4) is the strongest of these: it employs a second independent LLM call to verify and, if necessary, rewrite the first, going well beyond a single system-prompt instruction.
 
 \subsection{Model Limitations}
 
-\begin{itemize}[leftmargin=1.5em]
+\begin{itemize}[itemsep=3pt]
   \item The models were trained on synthetic data and may not generalise to real-world property markets.
-  \item Prompt extraction quality depends on the clarity of the user's text and on Groq API availability.
-  \item The comparable-property retrieval draws from the same synthetic training dataset, not from live market listings.
-  \item Investment grade labels (Avoid / Hold / Buy) reflect model output classes and carry no legal or professional standing.
+  \item Prompt extraction quality depends on the clarity of the user's text and Groq API availability.
+  \item Comparable-property retrieval draws from the same synthetic training dataset, not from live market listings.
+  \item Investment grade labels (Avoid / Hold / Buy) reflect model output classes and carry no professional standing.
 \end{itemize}
 
-% =====================================================================
+% ════════════════════════════════════════════════════════
 %  9. CONCLUSION
-% =====================================================================
+% ════════════════════════════════════════════════════════
 \section{Conclusion}
 
 This project demonstrates a complete progression from classical ML-based price prediction to a LangGraph-orchestrated agentic advisory system. The key contributions are:
 
-\begin{enumerate}[leftmargin=1.5em]
-  \item A high-accuracy XGBoost prediction pipeline achieving R\textsuperscript{2} = 0.9483 for price regression and 97.5\% accuracy for investment grade classification.
-  \item A genuine LangGraph implementation with a shared \texttt{TypedDict} state, six compiled \texttt{StateGraph} instances, and proper node-edge wiring --- not a superficial renaming of sequential function calls.
-  \item Five documented anti-hallucination guardrails applied at every LLM interaction point.
-  \item A structured advisory output satisfying all four rubric requirements: Summary, Comps, Action, and Disclaimer.
+\begin{enumerate}[label=\arabic*., leftmargin=*, itemsep=5pt]
+  \item A high-accuracy XGBoost prediction pipeline achieving $R^{2} = 0.9483$ for price regression and 97.5\% accuracy for investment grade classification, with a full per-class breakdown confirmed by confusion matrix and classification report.
+  \item A genuine LangGraph implementation with a shared TypedDict state, six compiled StateGraph instances, and proper node-edge wiring --- not a superficial renaming of sequential function calls.
+  \item A \textbf{Generator--Critic} two-agent validation loop in the Explanation Node, providing a stronger hallucination protection guarantee than a single-prompt approach.
+  \item Seven documented anti-hallucination guardrails applied at every LLM interaction point.
+  \item A structured advisory output satisfying all four rubric requirements: Summary, Comps, Action, and Explanation.
   \item A publicly deployed application on Streamlit Community Cloud with three input modes, email notification, and a reproducible local setup documented through \texttt{.env.example} and step-by-step README instructions.
-  \item Deterministic comparable-property retrieval that grounds LLM explanations in real training-data evidence, with a documented design justification for why semantic vector search was not appropriate for this use case.
+  \item Deterministic structured retrieval that grounds LLM explanations in real training-data evidence, with a documented design justification for why this approach is more appropriate than vector-based retrieval for structured tabular data.
 \end{enumerate}
 
 The project validates that a free-tier technology stack (Groq, LangGraph, XGBoost, Streamlit) is sufficient to build and deploy a production-quality agentic real estate advisory system.
 
-% =====================================================================
+% ════════════════════════════════════════════════════════
 %  REFERENCES
-% =====================================================================
+% ════════════════════════════════════════════════════════
 \section*{References}
 \addcontentsline{toc}{section}{References}
 
-\begin{enumerate}[leftmargin=1.5em]
-  \item LangGraph Documentation. \textit{LangGraph: Build stateful, multi-actor applications with LLMs}. LangChain Inc., 2024. \url{https://langchain-ai.github.io/langgraph/}
+\begin{enumerate}[label={[\arabic*]}, leftmargin=*, itemsep=4pt]
+  \item LangGraph Documentation. \textit{LangGraph: Build stateful, multi-actor applications with LLMs.} LangChain Inc., 2024. \href{https://langchain-ai.github.io/langgraph/}{\texttt{https://langchain-ai.github.io/langgraph/}}
   \item Chen, T., \& Guestrin, C. (2016). XGBoost: A Scalable Tree Boosting System. \textit{Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining}, 785--794.
-  \item Groq Documentation. \textit{Groq API Reference}. Groq Inc., 2024. \url{https://console.groq.com/docs/}
-  \item Streamlit Documentation. \textit{Streamlit: The fastest way to build and share data apps}. Snowflake Inc., 2024. \url{https://docs.streamlit.io/}
+  \item Groq Documentation. \textit{Groq API Reference.} Groq Inc., 2024. \href{https://console.groq.com/docs/}{\texttt{https://console.groq.com/docs/}}
+  \item Streamlit Documentation. \textit{Streamlit: The fastest way to build and share data apps.} Snowflake Inc., 2024. \href{https://docs.streamlit.io/}{\texttt{https://docs.streamlit.io/}}
   \item Pedregosa, F., et al. (2011). Scikit-learn: Machine Learning in Python. \textit{Journal of Machine Learning Research}, 12, 2825--2830.
-  \item GitHub Repository: \url{https://github.com/Jag2007/property-price-prediction}
-  \item Live Application: \url{https://property-price-prediction-real-estate.streamlit.app/}
+  \item GitHub Repository: \href{https://github.com/Jag2007/property-price-prediction}{\texttt{https://github.com/Jag2007/property-price-prediction}}
+  \item Live Application: \href{https://property-price-prediction-real-estate.streamlit.app/}{\texttt{https://property-price-prediction-real-estate.streamlit.app/}}
 \end{enumerate}
 
 \end{document}
