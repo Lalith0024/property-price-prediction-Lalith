@@ -51,6 +51,35 @@ The application is orchestrated by `app/property_graph.py`, which connects the w
 | Notification Node | `app/notification_nodes.py` | Formats prediction results and sends single-result or CSV-result emails through SMTP. |
 | CSV Prediction Node | `app/property_graph.py` | Runs batch predictions for uploaded CSV files. |
 
+```mermaid
+flowchart TD
+    User["User"] --> InputChoice{"Choose Input Type"}
+
+    InputChoice --> PromptPage["Prompt Agent"]
+    InputChoice --> ManualPage["Manual Parameters"]
+    InputChoice --> CsvPage["CSV Upload"]
+
+    PromptPage --> InputNode["Input Node<br/>Groq extracts fields"]
+    InputNode --> ReviewNode["Review Node<br/>Confirm or edit values"]
+    ReviewNode --> PredictionNode["Prediction Node<br/>XGBoost price and grade"]
+    PredictionNode --> ExplanationNode["Explanation Node<br/>Groq explains result"]
+    ExplanationNode --> ResultUI["Prediction shown in UI"]
+    ResultUI --> NotificationNode["Notification Node<br/>Email result"]
+
+    ManualPage --> ManualInputNode["Manual Input Node<br/>Wrap form values"]
+    ManualInputNode --> PredictionNode
+
+    CsvPage --> CsvPredictionNode["CSV Prediction Node<br/>Batch predictions"]
+    CsvPredictionNode --> CsvResultUI["CSV results shown in UI"]
+    CsvResultUI --> CsvNotificationNode["Notification Node<br/>Email CSV attachment"]
+```
+
+The graph has three entry paths:
+
+- **Prompt Agent path:** uses Groq to extract fields, pauses for user review, predicts with XGBoost, generates a Groq explanation, and can email the final result.
+- **Manual Parameters path:** skips prompt extraction because values are already structured, then reuses the same prediction, explanation, and email nodes.
+- **CSV Upload path:** runs a batch prediction node for all rows and can email the generated CSV attachment.
+
 ---
 
 ## Data Flow From Input To Output
