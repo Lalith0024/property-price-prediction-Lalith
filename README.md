@@ -49,7 +49,8 @@ For the detailed agent documentation, state evolution, guardrails, and edge-case
 | Input Node | `app/input_nodes.py` | Extracts property fields from a user prompt using Groq and fills missing fields with defaults. |
 | Review Node | `app/property_graph.py` | Marks prompt extraction as ready for the Streamlit human-review popup. |
 | Prediction Node | `app/prediction_nodes.py` | Loads the saved model artifacts, builds model-ready features, and predicts price/grade/confidence. |
-| Explanation Node | `app/explanation_nodes.py` | Uses a grounded Groq prompt to generate a short, constrained explanation for the prediction. |
+| Explanation Node | `app/explanation_nodes.py` | Uses generator and critic Groq prompts to produce a grounded, validated explanation. |
+| Report Node | `app/report_generator.py` | Builds one structured advisory report from prediction, inputs, comparables, explanation, and risk warning. |
 | Notification Node | `app/notification_nodes.py` | Formats prediction results and sends single-result or CSV-result emails through SMTP. |
 | CSV Prediction Node | `app/property_graph.py` | Runs batch predictions for uploaded CSV files. |
 
@@ -64,8 +65,9 @@ flowchart TD
     PromptPage --> InputNode["Input Node<br/>Groq extracts fields"]
     InputNode --> ReviewNode["Review Node<br/>Confirm or edit values"]
     ReviewNode --> PredictionNode["Prediction Node<br/>XGBoost price and recommendation"]
-    PredictionNode --> ExplanationNode["Explanation Node<br/>Grounded Groq explanation"]
-    ExplanationNode --> ResultUI["Advisory report shown in UI"]
+    PredictionNode --> ExplanationNode["Explanation Node<br/>Generator + critic validation"]
+    ExplanationNode --> ReportNode["Report Node<br/>Structured advisory report"]
+    ReportNode --> ResultUI["Dedicated report view"]
     ResultUI --> NotificationNode["Notification Node<br/>Email result"]
 
     ManualPage --> ManualInputNode["Manual Input Node<br/>Wrap form values"]
@@ -78,8 +80,8 @@ flowchart TD
 
 The graph has three entry paths:
 
-- **Prompt Agent path:** uses Groq to extract fields, pauses for user review, predicts with XGBoost, generates a grounded Groq explanation, and can email the final result.
-- **Manual Parameters path:** skips prompt extraction because values are already structured, then reuses the same prediction, explanation, and email nodes.
+- **Prompt Agent path:** uses Groq to extract fields, pauses for user review, predicts with XGBoost, validates the explanation with a critic prompt, builds a structured report, and can email the final result.
+- **Manual Parameters path:** skips prompt extraction because values are already structured, then reuses the same prediction, explanation, report, and email nodes.
 - **CSV Upload path:** runs a batch prediction node for all rows and can email the generated CSV attachment.
 
 ---
@@ -148,20 +150,41 @@ The app then:
 
 ### 6. Explanation Generation
 
-The Explanation Node calls `app/explanation_nodes.py` and sends the confirmed property inputs, model output, confidence, and comparable properties to Groq. Groq returns exactly four short bullets: **Summary**, **Market Context**, **Recommendation**, and **Risk Warning**.
+The Explanation Node calls `app/explanation_nodes.py` and sends the confirmed property inputs, model output, confidence, and comparable properties to Groq. It uses a two-step generator-critic pattern:
 
-The explanation is shown in the UI and included in the email report.
+1. the **Generator Agent** creates the first grounded explanation,
+2. the **Critic Agent** validates whether every claim is supported by the same JSON facts,
+3. the app shows the approved explanation or a corrected safe explanation.
+
+The final explanation keeps exactly four short bullets: **Summary**, **Market Context**, **Recommendation**, and **Risk Warning**.
+
+### 7. Structured Report Generation
+
+The Report Node calls `app/report_generator.py` after explanation. It combines:
+
+- prediction summary,
+- Avoid / Hold / Buy recommendation,
+- confirmed property details,
+- Prompt / Default / Edited source counts,
+- comparable training examples,
+- model probability table,
+- grounded explanation,
+- risk warning and disclaimer.
+
+This report is shown in a dedicated on-screen report view before the optional email feature.
 
 ### Prompting Guardrails To Reduce Hallucinations
 
 The project explicitly uses these anti-hallucination strategies:
 
 - **Grounding:** the explanation prompt includes only confirmed inputs, predicted price, advisory class, confidence, and comparable rows from the training data.
+- **Generator-critic validation:** one Groq step drafts the explanation, and a second critic step checks it against the same grounded JSON.
 - **Self-check instruction:** Groq is told to say "Based on the model output" when a claim is uncertain and not to present likely reasons as exact feature importance.
 - **Output constraint:** Groq must return exactly four labeled bullets, which keeps the response structured and prevents unsupported extra content.
+- **Report node:** the UI displays one structured advisory report instead of relying only on metric widgets.
 - **Fallback behavior:** if Groq explanation fails, the app shows a deterministic local explanation instead of breaking the prediction page.
 
-### 7. Notification
+### 8. Notification
 
 The Notification Node calls `app/notification_nodes.py` and sends results by email using SMTP credentials from `.env`, environment variables, or Streamlit secrets.
 
@@ -192,6 +215,7 @@ property-price-prediction/
 │   ├── input_nodes.py
 │   ├── prediction_nodes.py
 │   ├── explanation_nodes.py
+│   ├── report_generator.py
 │   ├── notification_nodes.py
 │   ├── pages.py
 │   └── styles.py
@@ -213,6 +237,8 @@ property-price-prediction/
 ├── notebooks/
 │   └── training_colab.ipynb
 ├── report/
+│   ├── milestone_2_report.pdf
+│   ├── milestone_2_report.tex
 │   ├── property_price_prediction_report.pdf
 │   └── property_price_prediction_report.tex
 ├── system_architecture.png
@@ -385,7 +411,7 @@ Metrics from the recorded training run:
 | Library | Role In This Project |
 | --- | --- |
 | Streamlit | Builds the complete UI, including navigation, prompt input, review/edit dialogs, CSV upload, prediction display, comparable-property tables, and email forms. |
-| LangGraph | Orchestrates the project as clear nodes: input, review, prediction, explanation, CSV prediction, and notification. This makes the agentic flow easy to explain during evaluation. |
+| LangGraph | Orchestrates the project as clear nodes: input, review, prediction, explanation, report generation, CSV prediction, and notification. This makes the agentic flow easy to explain during evaluation. |
 | Groq API | Powers natural-language prompt extraction and grounded prediction explanations through a fast hosted LLM endpoint. |
 | pandas | Loads CSV data, validates uploaded files, computes defaults, builds feature rows, prepares comparable-property tables, and exports prediction CSVs. |
 | scikit-learn | Provides saved scalers used to transform inference features exactly like training features. |
@@ -431,7 +457,7 @@ This README can be used as the base for the final report. A clean report structu
 1. **Problem Statement:** property valuation and investment-grade prediction.
 2. **Dataset And Features:** raw/processed data, numeric features, furnishing encoding, and neighborhood one-hot encoding.
 3. **Model Development:** preprocessing, XGBoost regression, XGBoost classification, and saved artifacts.
-4. **Agentic Workflow:** LangGraph nodes for input, review, prediction, explanation, CSV prediction, and notification.
+4. **Agentic Workflow:** LangGraph nodes for input, review, prediction, explanation, report generation, CSV prediction, and notification.
 5. **User Interface:** Streamlit pages for Prompt Agent, CSV Upload, Manual Input, and About.
 6. **Notification System:** SMTP email with prediction summary, source labels, comparable properties, explanation, and disclaimer.
 7. **Design Justification:** why XGBoost, LangGraph, Groq, Streamlit, SMTP, and deterministic comparable-property retrieval were chosen.
@@ -444,7 +470,7 @@ This README can be used as the base for the final report. A clean report structu
 
 | Page | What It Does |
 | --- | --- |
-| Prompt Agent | Runs the LangGraph flow: prompt extraction, review, prediction, explanation, and email. |
+| Prompt Agent | Runs the LangGraph flow: prompt extraction, review, prediction, validated explanation, structured report, and email. |
 | CSV Upload | Runs batch prediction from a CSV and can email the output file. |
 | Manual Input | Lets the user directly enter values, then predicts, explains, and emails the result. |
 | About | Summarizes the agentic workflow, models, metrics, and project files. |
@@ -456,7 +482,7 @@ This README can be used as the base for the final report. A clean report structu
 - **LLMs are most useful around the ML model, not as a replacement for it:** Groq handles language extraction and explanation, while XGBoost remains responsible for numeric prediction.
 - **Human review improves trust:** the Prompt Agent pauses before prediction so users can inspect defaults and edit values before the model runs.
 - **Structured data should use structured retrieval:** comparable properties are found through clear filters instead of semantic vector similarity, making the result easier to explain.
-- **Node-based design improves clarity:** LangGraph separates input, review, prediction, explanation, CSV prediction, and notification into understandable workflow blocks.
+- **Node-based design improves clarity:** LangGraph separates input, review, prediction, explanation validation, report generation, CSV prediction, and notification into understandable workflow blocks.
 - **Deployment needs secret hygiene:** `.env.example` documents required keys, while real API keys and email credentials stay out of version control.
 
 ---

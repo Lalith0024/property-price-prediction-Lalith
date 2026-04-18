@@ -11,6 +11,7 @@ from explanation_nodes import explanation_settings_from, generate_explanation
 from input_nodes import assemble_prompt_fields
 from notification_nodes import email_settings_from, send_csv_predictions_email, send_prediction_email
 from prediction_nodes import find_comparable_properties, predict_one_property, raw_to_feature_frame, run_predict
+from report_generator import build_advisory_report
 
 
 class PropertyWorkflowState(TypedDict, total=False):
@@ -28,6 +29,7 @@ class PropertyWorkflowState(TypedDict, total=False):
     result: dict[str, Any]
     explanation: str
     comparables: list[dict[str, Any]]
+    report: dict[str, Any]
     recipient: str
     email_sent: bool
     input_df: Any
@@ -35,7 +37,7 @@ class PropertyWorkflowState(TypedDict, total=False):
     review_ready: bool
 
 
-# Create the flow object used by review, prediction, explanation, and email.
+# Create the flow object used by review, prediction, explanation, report, and email.
 def prompt_input_node(state: PropertyWorkflowState) -> dict[str, Any]:
     context = state["context"]
     default_furnishing, default_neighborhood = context["default_categories"]
@@ -101,6 +103,17 @@ def explanation_node(state: PropertyWorkflowState) -> dict[str, Any]:
         state.get("comparables"),
     )
     return {"explanation": explanation}
+
+
+# Assemble a structured report after prediction and explanation are complete.
+def report_node(state: PropertyWorkflowState) -> dict[str, Any]:
+    report = build_advisory_report(
+        state["flow"],
+        state["result"],
+        state.get("explanation"),
+        state.get("comparables"),
+    )
+    return {"report": report}
 
 
 # Check whether a CSV contains encoded model columns or raw user-facing columns.
@@ -197,8 +210,10 @@ def build_single_prediction_graph(include_manual_input=False):
         graph.add_edge(START, "prediction_node")
 
     graph.add_node("explanation_node", explanation_node)
+    graph.add_node("report_node", report_node)
     graph.add_edge("prediction_node", "explanation_node")
-    graph.add_edge("explanation_node", END)
+    graph.add_edge("explanation_node", "report_node")
+    graph.add_edge("report_node", END)
     return graph.compile()
 
 

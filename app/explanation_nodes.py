@@ -66,26 +66,16 @@ def build_grounded_explanation_context(flow, result, comparables=None):
     }
 
 
-# Ask Groq for a constrained explanation of the prediction.
-def explain_with_groq(flow, result, settings, comparables=None):
-    prompt = build_grounded_explanation_context(flow, result, comparables)
-    system_prompt = (
-        "You are the Explanation Node for a student real-estate ML project. "
-        "Use only the JSON facts provided by the user message. Do not invent market trends, legal advice, "
-        "financial advice, exact feature importance, or facts from outside the JSON. "
-        "If a claim is uncertain, write 'Based on the model output' instead of stating it as fact. "
-        "Respond with exactly four bullets and these bold labels only: "
-        "**Summary:**, **Market Context:**, **Recommendation:**, **Risk Warning:**. "
-        "Keep each bullet simple and under 35 words."
-    )
+# Send one Groq chat request and return the assistant message content.
+def call_groq_chat(settings, messages, temperature=0.1, response_format=None):
     payload = {
         "model": settings["model"],
-        "temperature": 0.1,
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": json.dumps(prompt)},
-        ],
+        "temperature": temperature,
+        "messages": messages,
     }
+    if response_format:
+        payload["response_format"] = response_format
+
     request = urllib.request.Request(
         settings["api_url"],
         data=json.dumps(payload).encode("utf-8"),
@@ -103,9 +93,81 @@ def explain_with_groq(flow, result, settings, comparables=None):
             body = json.loads(response.read().decode("utf-8"))
     except urllib.error.HTTPError as exc:
         detail = exc.read().decode("utf-8", errors="replace")
-        raise RuntimeError(f"Groq explanation failed with status {exc.code}: {detail[:300]}") from exc
+        raise RuntimeError(f"Groq request failed with status {exc.code}: {detail[:300]}") from exc
 
     return body["choices"][0]["message"]["content"].strip()
+
+
+# Check whether the explanation follows the exact four-part report format.
+def has_required_report_sections(explanation):
+    required = ("**Summary:**", "**Market Context:**", "**Recommendation:**", "**Risk Warning:**")
+    return all(label in explanation for label in required)
+
+
+# Generator step: ask Groq for a constrained first draft.
+def draft_explanation_with_groq(context, settings):
+    system_prompt = (
+        "You are the Explanation Node for a student real-estate ML project. "
+        "Use only the JSON facts provided by the user message. Do not invent market trends, legal advice, "
+        "financial advice, exact feature importance, or facts from outside the JSON. "
+        "If a claim is uncertain, write 'Based on the model output' instead of stating it as fact. "
+        "Respond with exactly four bullets and these bold labels only: "
+        "**Summary:**, **Market Context:**, **Recommendation:**, **Risk Warning:**. "
+        "Keep each bullet simple and under 35 words."
+    )
+    return call_groq_chat(
+        settings,
+        [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": json.dumps(context)},
+        ],
+        temperature=0.1,
+    )
+
+
+# Critic step: cross-check the draft against the grounded JSON facts.
+def validate_explanation_with_groq(context, draft, settings):
+    critic_prompt = {
+        "grounded_context": context,
+        "draft_explanation": draft,
+        "validation_rules": [
+            "Approve only if every claim is supported by grounded_context.",
+            "Reject outside market facts, legal advice, financial advice, and exact feature-importance claims.",
+            "The final explanation must contain exactly the four required bullet labels.",
+            "If rejected, provide a corrected safe_explanation using the exact required labels.",
+        ],
+    }
+    system_prompt = (
+        "You are a Critic Agent validating a property prediction explanation. "
+        "Return JSON only with keys: approved, issues, safe_explanation. "
+        "approved must be true only when the draft is grounded and follows the required format."
+    )
+    content = call_groq_chat(
+        settings,
+        [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": json.dumps(critic_prompt)},
+        ],
+        temperature=0,
+        response_format={"type": "json_object"},
+    )
+    return json.loads(content)
+
+
+# Return the draft only after the critic approves it or provides a safer version.
+def explain_with_groq(flow, result, settings, comparables=None):
+    context = build_grounded_explanation_context(flow, result, comparables)
+    draft = draft_explanation_with_groq(context, settings)
+    validation = validate_explanation_with_groq(context, draft, settings)
+
+    if validation.get("approved") and has_required_report_sections(draft):
+        return draft
+
+    safe_explanation = validation.get("safe_explanation") or ""
+    if has_required_report_sections(safe_explanation):
+        return safe_explanation
+
+    raise RuntimeError("Critic Agent rejected the explanation and did not provide a valid safe version.")
 
 
 # Build a deterministic explanation when Groq is unavailable or the request fails.

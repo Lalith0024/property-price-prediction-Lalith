@@ -3,7 +3,6 @@ import streamlit as st
 
 from config import (
     ADVISORY_COLORS,
-    ADVISORY_DESCRIPTIONS,
     ADVISORY_LABELS,
     FURNISH_MAP,
     GRADE_LABELS,
@@ -23,6 +22,7 @@ from property_graph import (
     run_prompt_review_graph,
     run_result_email_graph,
 )
+from report_generator import build_advisory_report
 
 SOURCE_LABELS = {
     "Groq extracted": "Prompt",
@@ -33,24 +33,16 @@ SOURCE_LABELS = {
 
 
 # Show the common prediction output block used by prompt and manual pages.
-def render_result(result, explanation=None, flow=None, comparables=None, email_key="email"):
+def render_result(result, explanation=None, flow=None, comparables=None, report=None, email_key="email"):
+    report = report or build_advisory_report(flow, result, explanation, comparables)
+
     m1, m2, m3 = st.columns(3)
     m1.metric("Predicted Price", f"Rs {result['price']:,.0f}")
     with m2:
         st.markdown(advisory_card_html(result), unsafe_allow_html=True)
     m3.metric("Confidence", f"{result['confidence']:.1%}")
 
-    prob_df = pd.DataFrame(
-        [{"Advisory Class": grade, "Probability": f"{prob:.1%}"} for grade, prob in result["probabilities"].items()]
-    )
-    st.dataframe(prob_df, width="stretch", hide_index=True, height=145)
-
-    render_advisory_report(result, explanation, flow)
-
-    if comparables:
-        st.markdown("## Comparable Properties from Training Data")
-        st.dataframe(pd.DataFrame(comparables), width="stretch", hide_index=True, height=230)
-
+    render_report_view(report)
     render_email_form(result, explanation, flow, comparables, email_key)
 
 
@@ -69,32 +61,57 @@ def advisory_card_html(result):
     """
 
 
-# Show the complete on-screen advisory report before the optional email feature.
-def render_advisory_report(result, explanation=None, flow=None):
-    grade = int(result["grade"])
-    recommendation = ADVISORY_LABELS.get(grade, str(grade))
-    description = ADVISORY_DESCRIPTIONS.get(grade, "")
-
-    st.markdown("## Advisory Report")
+# Render one dedicated report view so the UI is more than separate metric widgets.
+def render_report_view(report):
+    st.markdown("## Structured Advisory Report")
     st.markdown(
         f"""
         <div class="advisory-report">
           <div class="advisory-report-kicker">Core output</div>
-          <div class="advisory-report-title">{recommendation} recommendation</div>
-          <p>{description}</p>
-          <p><strong>Model evidence:</strong> predicted price is Rs {result['price']:,.0f}, class confidence is {result['confidence']:.1%}, and the class probabilities are shown above.</p>
+          <div class="advisory-report-title">{report['summary']['advisory_recommendation']} recommendation</div>
+          <p>{report['recommendation']['meaning']}</p>
+          <p><strong>Model evidence:</strong> {", ".join(report['model_evidence'])}.</p>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    if flow:
-        st.markdown("## Confirmed Property Details")
-        st.dataframe(compact_audit_frame(flow), width="stretch", hide_index=True, height=230)
+    summary_tab, inputs_tab, comps_tab, technical_tab = st.tabs(
+        ["Report", "Confirmed Inputs", "Comparables", "Technical"]
+    )
 
-    if explanation:
-        st.markdown("## Grounded Explanation")
-        st.info(explanation)
+    with summary_tab:
+        st.markdown("### Grounded Explanation")
+        st.info(report["explanation"])
+        st.markdown("### Risk Warning")
+        st.warning(report["risk_warning"])
+
+    with inputs_tab:
+        source_summary = report["source_summary"]
+        c1, c2, c3 = st.columns(3, gap="medium")
+        c1.markdown(
+            f"<div class='summary-card'><div class='label'>Prompt Values</div><div class='value'>{source_summary['Prompt']}</div></div>",
+            unsafe_allow_html=True,
+        )
+        c2.markdown(
+            f"<div class='summary-card'><div class='label'>Default Values</div><div class='value'>{source_summary['Default']}</div></div>",
+            unsafe_allow_html=True,
+        )
+        c3.markdown(
+            f"<div class='summary-card'><div class='label'>Edited Values</div><div class='value'>{source_summary['Edited']}</div></div>",
+            unsafe_allow_html=True,
+        )
+        st.dataframe(pd.DataFrame(report["property_summary"]), width="stretch", hide_index=True, height=250)
+
+    with comps_tab:
+        if report["comparables"]:
+            st.dataframe(pd.DataFrame(report["comparables"]), width="stretch", hide_index=True, height=250)
+        else:
+            st.info("No comparable training rows were available for this prediction.")
+
+    with technical_tab:
+        st.dataframe(pd.DataFrame(report["probabilities"]), width="stretch", hide_index=True, height=145)
+        st.caption(report["disclaimer"])
 
 
 # Show the email delivery form handled by the LangGraph notification node.
@@ -184,7 +201,7 @@ def page_agent(context):
         reset = st.button("Start Over", width="stretch")
 
     if reset:
-        for key in ["agent_flow", "agent_result", "agent_explanation", "agent_comparables", "agent_dialog"]:
+        for key in ["agent_flow", "agent_result", "agent_explanation", "agent_comparables", "agent_report", "agent_dialog"]:
             st.session_state.pop(key, None)
         st.rerun()
 
@@ -210,6 +227,7 @@ def page_agent(context):
         st.session_state.pop("agent_result", None)
         st.session_state.pop("agent_explanation", None)
         st.session_state.pop("agent_comparables", None)
+        st.session_state.pop("agent_report", None)
 
     flow = st.session_state.get("agent_flow")
     if not flow:
@@ -220,7 +238,7 @@ def page_agent(context):
     flow_summary(flow)
 
     if flow.get("agent_warning"):
-        st.info("Fallback extractor active. Add GROQ_API_KEY to use the Groq parser.")
+        st.warning(flow["agent_warning"])
 
     b1, b2 = st.columns(2, gap="medium")
     with b1:
@@ -238,6 +256,7 @@ def page_agent(context):
             st.session_state.get("agent_explanation"),
             st.session_state.get("agent_flow"),
             st.session_state.get("agent_comparables"),
+            st.session_state.get("agent_report"),
             "agent_email",
         )
 
@@ -278,6 +297,7 @@ def page_agent(context):
                 st.session_state["agent_result"] = graph_state["result"]
                 st.session_state["agent_comparables"] = graph_state["comparables"]
                 st.session_state["agent_explanation"] = graph_state["explanation"]
+                st.session_state["agent_report"] = graph_state["report"]
                 st.session_state["agent_dialog"] = None
                 st.rerun()
         with d2:
@@ -369,6 +389,7 @@ def page_agent(context):
             st.session_state["agent_result"] = graph_state["result"]
             st.session_state["agent_comparables"] = graph_state["comparables"]
             st.session_state["agent_explanation"] = graph_state["explanation"]
+            st.session_state["agent_report"] = graph_state["report"]
             st.session_state["agent_dialog"] = None
             st.rerun()
 
@@ -437,7 +458,7 @@ def clear_agent_edit_keys():
 def clear_stale_fallback_flow(settings):
     flow = st.session_state.get("agent_flow")
     if settings.get("api_key") and flow and flow.get("agent_source") == "Rule parser fallback":
-        for key in ["agent_flow", "agent_result", "agent_explanation", "agent_comparables", "agent_dialog"]:
+        for key in ["agent_flow", "agent_result", "agent_explanation", "agent_comparables", "agent_report", "agent_dialog"]:
             st.session_state.pop(key, None)
         st.info("Groq key is now loaded. Re-analyze the prompt to use Groq extraction.")
 
@@ -527,6 +548,7 @@ def page_manual(context):
         st.session_state["last_flow"] = graph_state["flow"]
         st.session_state["last_comparables"] = graph_state["comparables"]
         st.session_state["last_explanation"] = graph_state["explanation"]
+        st.session_state["last_report"] = graph_state["report"]
 
     if "last_result" in st.session_state:
         render_result(
@@ -534,6 +556,7 @@ def page_manual(context):
             st.session_state.get("last_explanation"),
             st.session_state.get("last_flow"),
             st.session_state.get("last_comparables"),
+            st.session_state.get("last_report"),
             "manual_email",
         )
 
@@ -555,8 +578,9 @@ and an <strong>advisory recommendation</strong> using XGBoost, with a Groq-power
 1. **Input Node** extracts property fields from a prompt using Groq, then fills missing fields with defaults.
 2. **Review Node** prepares the extracted values for the Streamlit confirmation popup.
 3. **Prediction Node** converts confirmed fields into model features and runs the saved XGBoost models.
-4. **Explanation Node** explains the grounded model output in a constrained Groq prompt.
-5. **Notification Node** emails the final prediction and explanation to the recipient entered by the user.
+4. **Explanation Node** drafts and validates the grounded model explanation using generator and critic prompts.
+5. **Report Node** builds one structured advisory report for the UI.
+6. **Notification Node** emails the final prediction and explanation to the recipient entered by the user.
 """
     )
 
@@ -598,6 +622,7 @@ and an <strong>advisory recommendation</strong> using XGBoost, with a Groq-power
   input_nodes.py     # Groq prompt extraction and defaults
   prediction_nodes.py # model loading, features, prediction
   explanation_nodes.py # Groq prediction explanation
+  report_generator.py # structured advisory report builder
   notification_nodes.py # email delivery
   pages.py           # Streamlit pages and dialogs
   styles.py          # visual styling""",

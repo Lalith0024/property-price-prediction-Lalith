@@ -22,8 +22,9 @@ flowchart TD
     PromptPath --> InputNode["Input Node<br/>Groq extracts structured fields"]
     InputNode --> ReviewNode["Review Node<br/>Human confirms or edits values"]
     ReviewNode --> PredictionNode["Prediction Node<br/>XGBoost predicts price and recommendation"]
-    PredictionNode --> ExplanationNode["Explanation Node<br/>Grounded Groq explanation"]
-    ExplanationNode --> AdvisoryUI["On-screen Advisory Report"]
+    PredictionNode --> ExplanationNode["Explanation Node<br/>Generator + critic validation"]
+    ExplanationNode --> ReportNode["Report Node<br/>Builds structured advisory report"]
+    ReportNode --> AdvisoryUI["Dedicated report view"]
     AdvisoryUI --> NotificationNode["Notification Node<br/>Optional email report"]
 
     ManualPath --> ManualInputNode["Manual Input Node<br/>Wraps form fields into graph state"]
@@ -48,6 +49,7 @@ The main wrapper is `app/property_graph.py`.
   - `app/input_nodes.py` handles Groq prompt extraction and input defaults.
   - `app/prediction_nodes.py` handles feature construction, ML model inference, and comparables.
   - `app/explanation_nodes.py` handles grounded prediction explanations.
+  - `app/report_generator.py` builds the structured advisory report shown in the UI.
   - `app/notification_nodes.py` handles optional email delivery.
   - `app/pages.py` handles Streamlit UI, popups, review tables, and advisory reports.
 
@@ -64,7 +66,8 @@ from the agent nodes, and the ML model is separate from the LLM logic.
 | Review Node | `app/property_graph.py` | `flow` | `review_ready` | Marks the extracted values as ready for the Streamlit review popup. |
 | Manual Input Node | `app/property_graph.py` | `numeric_inputs`, `furnishing`, `neighborhood` | `mode`, `flow` | Converts manual form values into the same `flow` format used by the prompt path. |
 | Prediction Node | `app/property_graph.py` + `app/prediction_nodes.py` | `flow`, `context` | `result`, `comparables` | Builds model features, runs XGBoost regression/classification, calculates confidence, and retrieves comparable training examples. |
-| Explanation Node | `app/property_graph.py` + `app/explanation_nodes.py` | `flow`, `result`, `comparables`, `explanation_settings` | `explanation` | Sends only grounded model facts to Groq and asks for a constrained explanation. |
+| Explanation Node | `app/property_graph.py` + `app/explanation_nodes.py` | `flow`, `result`, `comparables`, `explanation_settings` | `explanation` | Sends only grounded model facts to Groq, drafts an explanation, and validates it with a critic prompt. |
+| Report Node | `app/property_graph.py` + `app/report_generator.py` | `flow`, `result`, `explanation`, `comparables` | `report` | Converts prediction outputs into one structured advisory report with summary, inputs, comparables, technical evidence, and risk warning. |
 | CSV Prediction Node | `app/property_graph.py` + `app/prediction_nodes.py` | `input_df`, `context` | `mode`, `output_df` | Validates CSV columns and runs batch predictions for every row. |
 | Notification Node | `app/property_graph.py` + `app/notification_nodes.py` | `recipient`, `result`, `flow`, `explanation`, `comparables`, `email_settings` | `email_sent` | Sends the final report by email only when the user enters a recipient and clicks send. |
 
@@ -80,7 +83,8 @@ The system makes these decisions automatically:
 - converts raw values into encoded model features,
 - predicts price, advisory class, and confidence,
 - retrieves comparable properties from the training data,
-- generates a grounded explanation from confirmed values and model outputs,
+- generates and validates a grounded explanation from confirmed values and model outputs,
+- assembles one structured advisory report from all outputs,
 - falls back to a safe local explanation if Groq explanation fails.
 
 The system requires human input for these decisions:
@@ -105,14 +109,15 @@ The system requires human input for these decisions:
 | User edits or confirms | updated `flow`, with only changed fields marked `Edited by user` |
 | Prediction Node runs | `result.price`, `result.grade`, `result.confidence`, `result.probabilities`, `comparables` |
 | Explanation Node runs | `explanation` |
-| UI displays result | advisory card, property summary, probability table, comparable table, grounded explanation |
+| Report Node runs | `report.summary`, `report.property_summary`, `report.probabilities`, `report.comparables`, `report.risk_warning` |
+| UI displays result | advisory card plus dedicated report tabs for report, inputs, comparables, and technical details |
 | Optional email | `recipient`, `email_sent=True` |
 
 ### Manual Input Path
 
 Manual input skips Groq extraction. The Manual Input Node wraps the form values
-into `flow`, then reuses the same Prediction Node, Explanation Node, advisory
-report UI, and optional Notification Node.
+into `flow`, then reuses the same Prediction Node, Explanation Node, Report
+Node, advisory report UI, and optional Notification Node.
 
 ### CSV Upload Path
 
@@ -163,7 +168,19 @@ The system prompt explicitly says not to invent outside market facts, legal
 claims, financial advice, or exact feature importance. It also says to use
 "Based on the model output" for uncertain claims.
 
-### Guardrail 4: Output Format Constraint
+### Guardrail 4: Generator-Critic Cross-Validation
+
+The explanation is not accepted directly from the first Groq response. The
+Explanation Node uses two LLM-facing roles:
+
+- **Generator Agent:** writes the first explanation from the grounded JSON.
+- **Critic Agent:** checks whether every claim is supported by the same JSON and
+  either approves it or returns a safer corrected explanation.
+
+This demonstrates a stronger anti-hallucination strategy than a single weak
+system prompt line.
+
+### Guardrail 5: Output Format Constraint
 
 The Explanation Node asks Groq for exactly four bullets:
 
@@ -175,7 +192,13 @@ The Explanation Node asks Groq for exactly four bullets:
 This keeps the explanation short, structured, and less likely to drift into
 unsupported content.
 
-### Guardrail 5: Safe Fallbacks
+### Guardrail 6: Structured Report Node
+
+The final UI output is a structured advisory report, not only metric widgets.
+The Report Node assembles prediction summary, recommendation, confirmed inputs,
+source labels, comparable rows, explanation, probability table, and disclaimer.
+
+### Guardrail 7: Safe Fallbacks
 
 If `GROQ_API_KEY` is missing, prompt extraction can use a local rule parser for
 demo safety. If Groq explanation fails, the app still returns a deterministic
@@ -219,6 +242,7 @@ investment advice.
 
 The system is not only a static ML form. It uses a node-based workflow where the
 LLM extracts user intent, the graph pauses for human review, the ML model produces
-structured outputs, the explanation node reasons only from grounded facts, and the
-notification node can deliver the final result. Each node has a clear role, reads
-and writes state, and handles edge cases separately.
+structured outputs, the explanation node reasons only from grounded facts, the
+report node creates a complete advisory report, and the notification node can
+deliver the final result. Each node has a clear role, reads and writes state, and
+handles edge cases separately.
