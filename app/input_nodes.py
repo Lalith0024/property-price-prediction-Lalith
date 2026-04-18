@@ -1,6 +1,6 @@
-# Input Agent
-# This agent converts a user's natural-language property prompt into structured model fields.
-# It uses Groq when GROQ_API_KEY is configured, and falls back to simple local parsing only when no key is available.
+# Input Nodes
+# These helpers prepare property inputs for the LangGraph workflow.
+# Prompt input is extracted with Groq when configured, while missing fields use training-data defaults.
 
 import json
 import re
@@ -19,8 +19,8 @@ from config import (
 )
 
 
-# Return the Groq settings used by the prompt extraction step.
-def api_settings_from(secrets):
+# Return the Groq settings used by the prompt extraction node.
+def input_settings_from(secrets):
     api_key = config_value(secrets, "GROQ_API_KEY")
     return {
         "api_key": api_key,
@@ -197,7 +197,7 @@ def parse_prompt(prompt, settings):
 
 
 # Merge extracted prompt values with defaults for fields the user did not mention.
-def assemble_agent_fields(prompt, defaults, default_furnishing, default_neighborhood, settings):
+def assemble_prompt_fields(prompt, defaults, default_furnishing, default_neighborhood, settings):
     parsed_numeric, parsed_furnishing, parsed_neighborhood, source_label, warning = parse_prompt(prompt, settings)
     numeric_inputs = {}
     sources = {}
@@ -228,7 +228,7 @@ def assemble_agent_fields(prompt, defaults, default_furnishing, default_neighbor
 
 
 # Build the review-table rows shown to the user before prediction.
-def agent_audit_rows(flow):
+def review_rows(flow):
     rows = []
     for col in RAW_NUMERIC_COLUMNS:
         rows.append(

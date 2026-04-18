@@ -6,7 +6,7 @@
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.54.0-FF4B4B?style=flat-square&logo=streamlit&logoColor=white)](https://streamlit.io)
 [![XGBoost](https://img.shields.io/badge/XGBoost-3.2.0-0F9D58?style=flat-square)](https://xgboost.readthedocs.io/)
 
-This project predicts property market price and investment grade using saved XGBoost models. It also adds an agentic layer where Groq converts natural-language property descriptions into model-ready fields, explains the prediction, and sends the final result by email.
+This project predicts property market price and investment grade using saved XGBoost models. It also adds a LangGraph-based agentic layer where Groq converts natural-language property descriptions into model-ready fields, explains the prediction, and sends the final result by email.
 
 Hosted Streamlit URL: <https://property-price-prediction-real-estate.streamlit.app/>
 
@@ -22,7 +22,7 @@ The application answers two real-estate questions:
 The current project has two connected parts:
 
 - **ML prediction pipeline:** uses trained XGBoost regression and classification models.
-- **Agentic application flow:** uses Groq and modular agents to extract inputs, explain predictions, and notify users.
+- **Agentic application flow:** uses LangGraph nodes with Groq and modular helpers to extract inputs, explain predictions, and notify users.
 
 The app supports three input modes:
 
@@ -38,16 +38,18 @@ The app supports three input modes:
 
 ![System Architecture](system_architecture.png)
 
-### Active Agentic Workflow
+### Active LangGraph Workflow
 
-The application is split into four agent files:
+The application is orchestrated by `app/property_graph.py`, which connects the workflow as LangGraph nodes:
 
-| Agent | File | Responsibility |
+| Node | File | Responsibility |
 | --- | --- | --- |
-| Input Agent | `app/input_agent.py` | Extracts property fields from a user prompt using Groq and fills missing fields with defaults. |
-| Prediction Agent | `app/prediction_agent.py` | Loads the saved model artifacts, builds model-ready features, and predicts price/grade/confidence. |
-| Explanation Agent | `app/explanation_agent.py` | Uses Groq to generate a short, simple explanation for the prediction. |
-| Notification Agent | `app/notification_agent.py` | Formats prediction results and sends single-result or CSV-result emails through SMTP. |
+| Input Node | `app/input_nodes.py` | Extracts property fields from a user prompt using Groq and fills missing fields with defaults. |
+| Review Node | `app/property_graph.py` | Marks prompt extraction as ready for the Streamlit human-review popup. |
+| Prediction Node | `app/prediction_nodes.py` | Loads the saved model artifacts, builds model-ready features, and predicts price/grade/confidence. |
+| Explanation Node | `app/explanation_nodes.py` | Uses Groq to generate a short, simple explanation for the prediction. |
+| Notification Node | `app/notification_nodes.py` | Formats prediction results and sends single-result or CSV-result emails through SMTP. |
+| CSV Prediction Node | `app/property_graph.py` | Runs batch predictions for uploaded CSV files. |
 
 ---
 
@@ -63,7 +65,7 @@ The user enters data through one of three Streamlit pages:
 
 ### 2. Input Processing
 
-For prompt input, `app/input_agent.py` sends the text to Groq using `GROQ_API_KEY`. Groq returns JSON containing:
+For prompt input, the LangGraph input node calls `app/input_nodes.py` and sends the text to Groq using `GROQ_API_KEY`. Groq returns JSON containing:
 
 - numeric property fields,
 - furnishing status,
@@ -90,7 +92,7 @@ Only the fields actually changed in the edit popup are marked as **Edited**.
 
 ### 4. Feature Construction
 
-`app/prediction_agent.py` converts confirmed user-facing fields into the feature format used during training:
+The LangGraph prediction node calls `app/prediction_nodes.py` to convert confirmed user-facing fields into the feature format used during training:
 
 - numeric fields are placed in the saved feature order,
 - `Furnishing_Status` is ordinal encoded,
@@ -99,7 +101,7 @@ Only the fields actually changed in the edit popup are marked as **Edited**.
 
 ### 5. Model Prediction
 
-The Prediction Agent loads these artifacts from `models/`:
+The Prediction Node loads these artifacts from `models/`:
 
 - `xgb_regression_model.joblib`
 - `regression_scaler.joblib`
@@ -115,13 +117,13 @@ The app then:
 
 ### 6. Explanation Generation
 
-`app/explanation_agent.py` sends the confirmed property inputs and model output to Groq. Groq returns 3 to 5 short bullet points explaining likely reasons for the prediction in simple language.
+The Explanation Node calls `app/explanation_nodes.py` and sends the confirmed property inputs plus model output to Groq. Groq returns 3 to 5 short bullet points explaining likely reasons for the prediction in simple language.
 
 The explanation is shown in the UI and included in the email report.
 
 ### 7. Notification
 
-`app/notification_agent.py` sends results by email using SMTP credentials from `.env`, environment variables, or Streamlit secrets.
+The Notification Node calls `app/notification_nodes.py` and sends results by email using SMTP credentials from `.env`, environment variables, or Streamlit secrets.
 
 Single prediction emails include:
 
@@ -143,10 +145,11 @@ property-price-prediction/
 ├── app/
 │   ├── streamlit_app.py
 │   ├── config.py
-│   ├── input_agent.py
-│   ├── prediction_agent.py
-│   ├── explanation_agent.py
-│   ├── notification_agent.py
+│   ├── property_graph.py
+│   ├── input_nodes.py
+│   ├── prediction_nodes.py
+│   ├── explanation_nodes.py
+│   ├── notification_nodes.py
 │   ├── pages.py
 │   └── styles.py
 │
@@ -320,6 +323,7 @@ Metrics from the recorded training run:
 | pandas | Loads CSV data, validates uploaded files, builds feature rows, and prepares output CSVs. |
 | scikit-learn | Provides saved scalers used before model prediction. |
 | XGBoost | Provides the regression and classification models. |
+| LangGraph | Orchestrates the input, review, prediction, explanation, CSV, and notification nodes. |
 | joblib | Loads saved model and scaler artifacts. |
 | urllib | Sends Groq API requests without adding an extra API client dependency. |
 | smtplib / email | Sends formatted prediction emails through SMTP. |
@@ -330,7 +334,7 @@ Metrics from the recorded training run:
 
 | Page | What It Does |
 | --- | --- |
-| Prompt Agent | Runs the full agentic flow: prompt extraction, review, prediction, explanation, and email. |
+| Prompt Agent | Runs the LangGraph flow: prompt extraction, review, prediction, explanation, and email. |
 | CSV Upload | Runs batch prediction from a CSV and can email the output file. |
 | Manual Input | Lets the user directly enter values, then predicts, explains, and emails the result. |
 | About | Summarizes the agentic workflow, models, metrics, and project files. |

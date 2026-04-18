@@ -1,11 +1,17 @@
 import pandas as pd
 import streamlit as st
 
-from explanation_agent import explanation_settings_from, generate_explanation
-from input_agent import agent_audit_rows, api_settings_from, assemble_agent_fields
-from notification_agent import email_settings_from, send_csv_predictions_email, send_prediction_email
 from config import FURNISH_MAP, GRADE_LABELS, INT_COLUMNS, LABELS, NEIGHBORHOODS, PROMPT_EXAMPLE, RAW_NUMERIC_COLUMNS
-from prediction_agent import build_feature_row, predict_single, raw_to_feature_frame, run_predict
+from input_nodes import input_settings_from, review_rows
+from property_graph import (
+    csv_column_status,
+    run_confirmed_prediction_graph,
+    run_csv_email_graph,
+    run_csv_prediction_graph,
+    run_manual_prediction_graph,
+    run_prompt_review_graph,
+    run_result_email_graph,
+)
 
 SOURCE_LABELS = {
     "Groq extracted": "Prompt",
@@ -34,18 +40,18 @@ def render_result(result, explanation=None, flow=None, email_key="email"):
     render_email_form(result, explanation, flow, email_key)
 
 
-# Show the email delivery form handled by the Notification Agent.
+# Show the email delivery form handled by the LangGraph notification node.
 def render_email_form(result, explanation, flow, key_prefix):
     with st.expander("Email this result"):
         recipient = st.text_input("Recipient email", key=f"{key_prefix}_recipient")
         if st.button("Send Email", width="stretch", key=f"{key_prefix}_send"):
             try:
-                send_prediction_email(
+                run_result_email_graph(
                     recipient,
                     result,
                     explanation,
                     flow,
-                    email_settings_from(st.secrets),
+                    st.secrets,
                 )
             except Exception as exc:
                 st.error(f"Email failed: {exc}")
@@ -59,10 +65,10 @@ def render_csv_email_form(output_df):
         recipient = st.text_input("Recipient email", key="csv_email_recipient")
         if st.button("Send CSV by Email", width="stretch", key="csv_email_send"):
             try:
-                send_csv_predictions_email(
+                run_csv_email_graph(
                     recipient,
                     output_df,
-                    email_settings_from(st.secrets),
+                    st.secrets,
                 )
             except Exception as exc:
                 st.error(f"Email failed: {exc}")
@@ -99,8 +105,7 @@ def page_agent(context):
         unsafe_allow_html=True,
     )
 
-    default_furnishing, default_neighborhood = context["default_categories"]
-    settings = api_settings_from(st.secrets)
+    settings = input_settings_from(st.secrets)
     if settings["api_key"]:
         st.caption(f"Groq API mode: {settings['model']}")
     else:
@@ -131,13 +136,12 @@ def page_agent(context):
             return
         clear_agent_edit_keys()
         try:
-            st.session_state["agent_flow"] = assemble_agent_fields(
+            graph_state = run_prompt_review_graph(
                 prompt,
-                context["defaults"],
-                default_furnishing,
-                default_neighborhood,
+                context,
                 settings,
             )
+            st.session_state["agent_flow"] = graph_state["flow"]
         except Exception as exc:
             st.session_state.pop("agent_flow", None)
             st.session_state.pop("agent_result", None)
@@ -179,7 +183,6 @@ def page_agent(context):
 
     # Keep confirmation in a popup so the main page does not become scroll-heavy.
     @st.dialog("Review categorized parameters", width="large")
-    # Keep confirmation in a popup so the main page does not become scroll-heavy.
     def review_dialog():
         flow = st.session_state["agent_flow"]
         audit = compact_audit_frame(flow)
@@ -207,18 +210,13 @@ def page_agent(context):
         d1, d2, d3 = st.columns(3, gap="medium")
         with d1:
             if st.button("Proceed", width="stretch"):
-                result = predict_single(
-                    flow["numeric_inputs"],
-                    flow["furnishing"],
-                    flow["neighborhood"],
-                    context,
-                )
-                st.session_state["agent_result"] = result
-                st.session_state["agent_explanation"] = generate_explanation(
+                graph_state = run_confirmed_prediction_graph(
                     flow,
-                    result,
-                    explanation_settings_from(st.secrets),
+                    context,
+                    st.secrets,
                 )
+                st.session_state["agent_result"] = graph_state["result"]
+                st.session_state["agent_explanation"] = graph_state["explanation"]
                 st.session_state["agent_dialog"] = None
                 st.rerun()
         with d2:
@@ -232,7 +230,6 @@ def page_agent(context):
 
     # Keep edits grouped by meaning instead of showing one long form.
     @st.dialog("Change categorized values", width="large")
-    # Keep edits grouped by meaning instead of showing one long form.
     def edit_dialog():
         flow = st.session_state["agent_flow"]
         with st.form("agent_edit_form"):
@@ -303,18 +300,13 @@ def page_agent(context):
                 "agent_source": flow.get("agent_source", "Groq extracted"),
                 "agent_warning": None,
             }
-            result = predict_single(
-                edited_numeric,
-                edited_furnishing,
-                edited_neighborhood,
-                context,
-            )
-            st.session_state["agent_result"] = result
-            st.session_state["agent_explanation"] = generate_explanation(
+            graph_state = run_confirmed_prediction_graph(
                 st.session_state["agent_flow"],
-                result,
-                explanation_settings_from(st.secrets),
+                context,
+                st.secrets,
             )
+            st.session_state["agent_result"] = graph_state["result"]
+            st.session_state["agent_explanation"] = graph_state["explanation"]
             st.session_state["agent_dialog"] = None
             st.rerun()
 
@@ -333,7 +325,7 @@ def integer_or_decimal_input(col, value, key):
 
 # Prepare review rows with friendly display labels and formatted values.
 def compact_audit_frame(flow):
-    audit = pd.DataFrame(agent_audit_rows(flow))
+    audit = pd.DataFrame(review_rows(flow))
     audit["Value"] = audit["Value"].map(format_review_value)
     audit["Source"] = audit["Source"].map(lambda value: SOURCE_LABELS.get(value, value))
     return audit
@@ -388,23 +380,6 @@ def clear_stale_fallback_flow(settings):
         st.info("Groq key is now loaded. Re-analyze the prompt to use Groq extraction.")
 
 
-# Build a flow-shaped object for manual input so explanation/email can reuse one format.
-def manual_flow(numeric_inputs, furnishing, neighborhood):
-    return {
-        "prompt": "Manual input",
-        "numeric_inputs": numeric_inputs,
-        "furnishing": furnishing,
-        "neighborhood": neighborhood,
-        "sources": {
-            **{col: "Edited by user" for col in RAW_NUMERIC_COLUMNS},
-            "Furnishing_Status": "Edited by user",
-            "Neighborhood": "Edited by user",
-        },
-        "agent_source": "Manual input",
-        "agent_warning": None,
-    }
-
-
 # CSV page for batch predictions using either raw or already-encoded columns.
 def page_csv(context):
     st.title("CSV Upload")
@@ -424,37 +399,15 @@ def page_csv(context):
     st.markdown(f"<span class='section-label'>{len(input_df)} rows preview</span>", unsafe_allow_html=True)
     st.dataframe(input_df.head(10), width="stretch", height=210)
 
-    feature_columns = context["feature_columns"]
-    has_encoded = all(c in input_df.columns for c in feature_columns)
-    has_raw = (
-        all(c in input_df.columns for c in RAW_NUMERIC_COLUMNS)
-        and "Furnishing_Status" in input_df.columns
-        and "Neighborhood" in input_df.columns
-    )
+    has_encoded, has_raw = csv_column_status(input_df, context)
 
     if not has_encoded and not has_raw:
         st.error("Column mismatch. Provide encoded feature columns or raw columns with Furnishing_Status and Neighborhood.")
         return
 
     if st.button("Run Predictions", width="stretch"):
-        features = (
-            input_df[feature_columns].copy()
-            if has_encoded
-            else raw_to_feature_frame(input_df, feature_columns, context["defaults"])
-        )
-        prices, grades, probs = run_predict(
-            features,
-            context["reg_model"],
-            context["reg_scaler"],
-            context["clf_model"],
-            context["clf_scaler"],
-        )
-
-        out = input_df.copy()
-        out["Predicted_Price_INR"] = prices
-        out["Predicted_Investment_Grade"] = grades
-        for i in range(probs.shape[1]):
-            out[f"Grade_{i}_Probability"] = probs[:, i]
+        graph_state = run_csv_prediction_graph(input_df, context)
+        out = graph_state["output_df"]
 
         st.markdown("---")
         st.markdown(f"<span class='section-label'>Results - {len(out)} rows</span>", unsafe_allow_html=True)
@@ -501,28 +454,16 @@ def page_manual(context):
     st.markdown("---")
 
     if st.button("Predict", width="stretch"):
-        flow = manual_flow(numeric_inputs, furnishing, neighborhood)
-        row = build_feature_row(numeric_inputs, furnishing, neighborhood, context["feature_columns"])
-        prices, grades, probs = run_predict(
-            row,
-            context["reg_model"],
-            context["reg_scaler"],
-            context["clf_model"],
-            context["clf_scaler"],
+        graph_state = run_manual_prediction_graph(
+            numeric_inputs,
+            furnishing,
+            neighborhood,
+            context,
+            st.secrets,
         )
-
-        st.session_state["last_result"] = {
-            "price": float(prices[0]),
-            "grade": int(grades[0]),
-            "confidence": float(probs[0].max()),
-            "probabilities": {GRADE_LABELS.get(i, str(i)): float(probs[0][i]) for i in range(probs.shape[1])},
-        }
-        st.session_state["last_flow"] = flow
-        st.session_state["last_explanation"] = generate_explanation(
-            flow,
-            st.session_state["last_result"],
-            explanation_settings_from(st.secrets),
-        )
+        st.session_state["last_result"] = graph_state["result"]
+        st.session_state["last_flow"] = graph_state["flow"]
+        st.session_state["last_explanation"] = graph_state["explanation"]
 
     if "last_result" in st.session_state:
         render_result(
@@ -544,13 +485,14 @@ and <strong>investment grade</strong> using XGBoost, with a Groq-powered prompt 
         unsafe_allow_html=True,
     )
 
-    st.markdown("## Agentic Flow")
+    st.markdown("## LangGraph Flow")
     st.markdown(
         """
-1. **Input Agent** extracts property fields from a prompt using Groq, then fills missing fields with defaults.
-2. **Prediction Agent** converts confirmed fields into model features and runs the saved XGBoost models.
-3. **Explanation Agent** explains the model output in simple language using Groq.
-4. **Notification Agent** emails the final prediction and explanation to the recipient entered by the user.
+1. **Input Node** extracts property fields from a prompt using Groq, then fills missing fields with defaults.
+2. **Review Node** prepares the extracted values for the Streamlit confirmation popup.
+3. **Prediction Node** converts confirmed fields into model features and runs the saved XGBoost models.
+4. **Explanation Node** explains the model output in simple language using Groq.
+5. **Notification Node** emails the final prediction and explanation to the recipient entered by the user.
 """
     )
 
@@ -588,10 +530,11 @@ and <strong>investment grade</strong> using XGBoost, with a Groq-powered prompt 
         """app/
   streamlit_app.py   # app shell
   config.py          # paths, labels, feature lists
-  input_agent.py     # Groq prompt extraction and defaults
-  prediction_agent.py # model loading, features, prediction
-  explanation_agent.py # Groq prediction explanation
-  notification_agent.py # email delivery
+  property_graph.py  # LangGraph state, nodes, and graph runners
+  input_nodes.py     # Groq prompt extraction and defaults
+  prediction_nodes.py # model loading, features, prediction
+  explanation_nodes.py # Groq prediction explanation
+  notification_nodes.py # email delivery
   pages.py           # Streamlit pages and dialogs
   styles.py          # visual styling""",
         language="text",

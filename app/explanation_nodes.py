@@ -1,6 +1,6 @@
-# Explanation Agent
-# This agent turns the model output into a short plain-English explanation for the user.
-# It uses Groq when configured, and returns a simple fallback explanation if Groq is unavailable.
+# Explanation Nodes
+# These helpers turn model outputs into short plain-English explanations for the user.
+# Groq is used when configured, with a local fallback message if Groq is unavailable.
 
 import json
 import urllib.error

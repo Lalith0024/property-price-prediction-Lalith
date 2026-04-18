@@ -1,6 +1,6 @@
-# Prediction Agent
-# This agent converts confirmed property fields into the feature schema used during training.
-# It loads the saved scalers and XGBoost models, then predicts price, investment grade, and confidence.
+# Prediction Nodes
+# These helpers convert confirmed property fields into the feature schema used during training.
+# They load the saved scalers and XGBoost models, then predict price, investment grade, and confidence.
 
 import joblib
 import pandas as pd
@@ -149,7 +149,7 @@ def run_predict(features, reg_model, reg_scaler, clf_model, clf_scaler):
 
 
 # Convenience wrapper for one confirmed property from prompt/manual input.
-def predict_single(numeric_inputs, furnishing, neighborhood, context):
+def predict_one_property(numeric_inputs, furnishing, neighborhood, context):
     row = build_feature_row(numeric_inputs, furnishing, neighborhood, context["feature_columns"])
     prices, grades, probs = run_predict(
         row,

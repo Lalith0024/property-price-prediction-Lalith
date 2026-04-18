@@ -1,5 +1,5 @@
-# Notification Agent
-# This agent emails the final prediction result to a recipient entered in the UI.
+# Notification Nodes
+# These helpers send prediction outputs from the LangGraph workflow to the recipient entered in the UI.
 # Sender credentials come from .env or Streamlit secrets, so the user only enters the receiver email.
 
 import smtplib
